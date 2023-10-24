@@ -39,6 +39,7 @@ public class User extends AbstractEntity {
         this.name = name;
     }
     public String getHashedPassword() {
+        System.out.println("Hashed pw : "+ hashedPassword);
         return hashedPassword;
     }
     public void setHashedPassword(String hashedPassword) {

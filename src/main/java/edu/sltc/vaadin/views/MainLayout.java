@@ -1,15 +1,12 @@
 package edu.sltc.vaadin.views;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.charts.model.style.Style;
 import com.vaadin.flow.component.contextmenu.MenuItem;
-import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Footer;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -60,12 +57,13 @@ public class MainLayout extends AppLayout {
     }
 
     private void addDrawerContent() {
-        H1 appName = new H1("File Fortress");
+        H2 appName = new H2("File Fortress");
+        // Create a Style tag and set the custom CSS
+        Image image = new Image("images/logo_placeholder.png", "placeholder plant");
+        image.setWidth("60px");
         appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-        Header header = new Header(appName);
-
+        Header header = new Header(image, appName);
         Scroller scroller = new Scroller(createNavigation());
-
         addToDrawer(header, scroller, createFooter());
     }
 
@@ -113,6 +111,10 @@ public class MainLayout extends AppLayout {
             avatar.setImageResource(resource);
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");
+            avatar.getStyle().setMargin("10px");
+
+            Icon icon = new Icon("lumo", "dropdown");
+            icon.getStyle().setMargin("10px");
 
             MenuBar userMenu = new MenuBar();
             userMenu.setThemeName("tertiary-inline contrast");
@@ -121,10 +123,10 @@ public class MainLayout extends AppLayout {
             Div div = new Div();
             div.add(avatar);
             div.add(user.getName());
-            div.add(new Icon("lumo", "dropdown"));
+            div.add(icon);
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");
-            div.getElement().getStyle().set("gap", "var(--lumo-space-s)");
+//            div.getElement().getStyle().set("gap", "var(--lumo-space-s)");
             userName.add(div);
             userName.getSubMenu().addItem("Sign out", e -> {
                 authenticatedUser.logout();

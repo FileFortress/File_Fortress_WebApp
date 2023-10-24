@@ -38,7 +38,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         if (authenticatedUser.get().isPresent()) {
             // Already logged in
             setOpened(false);
-            event.forwardTo("");
+            event.forwardTo("/about");
         }
 
         setError(event.getLocation().getQueryParameters().getParameters().containsKey("error"));

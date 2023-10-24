@@ -7,11 +7,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteAlias;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
+//@RouteAlias(value = "", layout = MainLayout.class)
 @RolesAllowed("USER")
 public class StudentDashboardView extends HorizontalLayout {
 
