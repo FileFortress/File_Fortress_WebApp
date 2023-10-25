@@ -148,6 +148,7 @@
   "@vaadin/vaadin-usage-statistics": "2.1.2",
   "@vaadin/vertical-layout": "24.2.0",
   "@vaadin/virtual-list": "24.2.0",
+  "@webcomponents/shadycss": "1.11.2",
   "construct-style-sheets-polyfill": "3.1.0",
   "cookieconsent": "3.1.1",
   "date-fns": "2.29.3",
@@ -262,10 +263,12 @@
   "Frontend/generated/jar-resources/vaadin-grid-flow-selection-column.js",
   "Frontend/generated/jar-resources/vaadin-map/mapConnector.js",
   "Frontend/generated/jar-resources/vaadin-time-picker/timepickerConnector.js",
-  "Frontend/generated/jar-resources/virtualListConnector.js"
+  "Frontend/generated/jar-resources/virtualListConnector.js",
+  "Frontend/simple-timer.js"
  ],
  "frontendHashes": {
   "themes/my-app/components/vaadin-button.css": "fb360cc9c7c5892b8c5b186c0b057b22f61c20d55854706f4320938cd5dc0e01",
+  "simple-timer.js": "9e132736a445a91efa952640fb7e1aebf1af34de044e0287c4a288f06a32b240",
   "buttonFunctions.js": "c852123f9b2c44eb75e555119d3e05a7dbe78b91d0ab616feb9df1654474707d",
   "comboBoxConnector.js": "1d004c3dae9c76f8bcc68678abe1b8f7bdc8b456f5c9c4c7f190df8ed25d66cd",
   "contextMenuConnector.js": "8960e00884b9a8b62e24be63e03fe7045dcb9b6844a8a238eb4619d5595e2cfc",
@@ -291,7 +294,7 @@
   "my-app": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-05309a64.js"
+  "VAADIN/build/indexhtml-ab9c62ba.js"
  ],
  "webComponents": [],
  "cvdlModules": {
@@ -326,6 +329,6 @@
  },
  "packageJsonHash": "3528802ccc0a0cc916ed0fe8fafed5b853e5f84c599e9fa068106d9f91aec8d5",
  "indexHtmlGenerated": [
-  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-05309a64.js\"></script>"
+  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-ab9c62ba.js\"></script>"
  ]
 }
