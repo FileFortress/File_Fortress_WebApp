@@ -36,6 +36,9 @@ public class AdminDashboardView extends VerticalLayout {
     private Timer timer;
     public AdminDashboardView() {
         setSpacing(false);
+        H2 remainingTime = new H2("Remaining Time");
+        add(remainingTime);
+        add(createTimerLayout());
 
         Div moduleDetails = new Div();
         moduleDetails.setMaxWidth("800px");
@@ -68,9 +71,7 @@ public class AdminDashboardView extends VerticalLayout {
 
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("350px", 2));
-        H2 remainingTime = new H2("Remaining Time");
-        add(remainingTime);
-        add(createTimerLayout());
+
 
         add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
         setSizeFull();
@@ -103,11 +104,15 @@ public class AdminDashboardView extends VerticalLayout {
 
     private SimpleTimer getRemainingTimerLayout() {
         // Calculate the remaining time and return it as a string
-        // Define the target date and time
-        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 25, 23, 0);
+//        // Define the target date and time
+//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
 
         // Get the current date and time
         LocalDateTime currentDateTime = LocalDateTime.now();
+
+        // Define the target date and time
+        // Add 3 hours to the current time
+        LocalDateTime targetDateTime = currentDateTime.plusHours(3);
 
         // Calculate the difference between the current and target date and time
         long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);

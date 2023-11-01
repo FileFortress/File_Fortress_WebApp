@@ -15,7 +15,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class SecurityConfiguration extends VaadinWebSecurity {
 
-    public static final String LOGOUT_URL = "/";
+//    public static final String LOGOUT_URL = "/";
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -32,6 +32,6 @@ public class SecurityConfiguration extends VaadinWebSecurity {
                 .requestMatchers(new AntPathRequestMatcher("/line-awesome/**/*.svg")).permitAll());
 
         super.configure(http);
-        setLoginView(http, LoginView.class, LOGOUT_URL);
+        setLoginView(http, LoginView.class);
     }
 }
