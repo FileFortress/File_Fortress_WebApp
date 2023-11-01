@@ -128,11 +128,16 @@ public class StudentDashboardView extends VerticalLayout {
 
     private SimpleTimer getRemainingTimerLayout() {
         // Calculate the remaining time and return it as a string
-        // Define the target date and time
-        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 27, 1, 0);
+//        // Define the target date and time
+//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
 
         // Get the current date and time
         LocalDateTime currentDateTime = LocalDateTime.now();
+
+        // Define the target date and time
+        // Add 3 hours to the current time
+        LocalDateTime targetDateTime = currentDateTime.plusHours(3);
+
 
         // Calculate the difference between the current and target date and time
         long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);
