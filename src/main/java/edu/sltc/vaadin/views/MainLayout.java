@@ -14,6 +14,7 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.User;
@@ -25,6 +26,8 @@ import edu.sltc.vaadin.views.setupexam.SetupExamView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
 import java.io.ByteArrayInputStream;
 import java.util.Optional;
+
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /**
@@ -32,6 +35,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
  */
 public class MainLayout extends AppLayout {
 
+    private static final String LOGOUT_SUCCESS_URL = "/";
     private H2 viewTitle;
 
     private AuthenticatedUser authenticatedUser;
@@ -100,7 +104,6 @@ public class MainLayout extends AppLayout {
 
     private Footer createFooter() {
         Footer layout = new Footer();
-
         Optional<User> maybeUser = authenticatedUser.get();
         if (maybeUser.isPresent()) {
             User user = maybeUser.get();
@@ -129,7 +132,7 @@ public class MainLayout extends AppLayout {
 //            div.getElement().getStyle().set("gap", "var(--lumo-space-s)");
             userName.add(div);
             userName.getSubMenu().addItem("Sign out", e -> {
-                authenticatedUser.logout();
+                logout();
             });
 
             layout.add(userMenu);
@@ -140,7 +143,11 @@ public class MainLayout extends AppLayout {
 
         return layout;
     }
-
+    public void logout() {
+        UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
+        SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+        logoutHandler.logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
+    }
     @Override
     protected void afterNavigation() {
         super.afterNavigation();
