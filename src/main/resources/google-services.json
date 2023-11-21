@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "325669946515",
+    "project_id": "file-fortress-51d7e",
+    "storage_bucket": "file-fortress-51d7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:325669946515:android:91a779652284be785eb966",
+        "android_client_info": {
+          "package_name": "edu.nuyun.filefortress"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "325669946515-00ad71aa2k44hlgqkac0fohv5lsqo0fg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.nuyun.filefortress",
+            "certificate_hash": "2d07cd8af21f0c6966eae6c6d4f1150166e69162"
+          }
+        },
+        {
+          "client_id": "325669946515-u1kpdm2utlles962n7q7ots54gh635hc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNnCj25Qz6BLLoeubbLinqen8idxkGSL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "325669946515-u1kpdm2utlles962n7q7ots54gh635hc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

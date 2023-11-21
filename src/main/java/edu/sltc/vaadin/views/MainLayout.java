@@ -1,10 +1,10 @@
 package edu.sltc.vaadin.views;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.charts.model.style.Style;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
@@ -18,33 +18,34 @@ import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.User;
-import edu.sltc.vaadin.security.AuthenticatedUser;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import edu.sltc.vaadin.views.setupexam.SetupExamView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
-import java.io.ByteArrayInputStream;
-import java.util.Optional;
-
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+
+import java.io.ByteArrayInputStream;
 
 /**
  * The main view is a top-level placeholder for other views.
  */
 public class MainLayout extends AppLayout {
 
-    private static final String LOGOUT_SUCCESS_URL = "/";
+    private static final String LOGOUT_SUCCESS_URL = "/login";
     private H2 viewTitle;
-
-    private AuthenticatedUser authenticatedUser;
     private AccessAnnotationChecker accessChecker;
+    private Authentication authentication;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker) {
-        this.authenticatedUser = authenticatedUser;
+    public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
-
+        this.authentication = SecurityContextHolder.getContext().getAuthentication();
+        OAuth2AuthenticatedPrincipal principal = (OAuth2AuthenticatedPrincipal)authentication.getPrincipal();
+        User.getInstance().init(principal);
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
@@ -53,10 +54,8 @@ public class MainLayout extends AppLayout {
     private void addHeaderContent() {
         DrawerToggle toggle = new DrawerToggle();
         toggle.setAriaLabel("Menu toggle");
-
         viewTitle = new H2();
         viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-
         addToNavbar(true, toggle, viewTitle);
     }
 
@@ -73,10 +72,9 @@ public class MainLayout extends AppLayout {
 
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
-
+//        nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class, LineAwesomeIcon.CHART_AREA_SOLID.create()));
         if (accessChecker.hasAccess(AdminDashboardView.class)) {
-            nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class,
-                    LineAwesomeIcon.CHART_AREA_SOLID.create()));
+            nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class, LineAwesomeIcon.CHART_AREA_SOLID.create()));
 
         }
         if (accessChecker.hasAccess(SetupExamView.class)) {
@@ -96,7 +94,6 @@ public class MainLayout extends AppLayout {
         }
         if (accessChecker.hasAccess(AboutView.class)) {
             nav.addItem(new SideNavItem("About", AboutView.class, LineAwesomeIcon.INFO_SOLID.create()));
-
         }
 
         return nav;
@@ -104,13 +101,11 @@ public class MainLayout extends AppLayout {
 
     private Footer createFooter() {
         Footer layout = new Footer();
-        Optional<User> maybeUser = authenticatedUser.get();
-        if (maybeUser.isPresent()) {
-            User user = maybeUser.get();
-
+        User user = User.getInstance();
+        if (user != null) {
             Avatar avatar = new Avatar(user.getName());
             StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(user.getProfilePicture()));
+                    () -> new ByteArrayInputStream(user.getPictureUrl().getBytes()));
             avatar.setImageResource(resource);
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");
@@ -124,8 +119,10 @@ public class MainLayout extends AppLayout {
 
             MenuItem userName = userMenu.addItem("");
             Div div = new Div();
+            //<theme-editor-local-classname>
+            div.addClassName("main-layout-div-1");
             div.add(avatar);
-            div.add(user.getName());
+            div.add(user.getGivenName());
             div.add(icon);
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");
@@ -148,6 +145,7 @@ public class MainLayout extends AppLayout {
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
         logoutHandler.logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
     }
+    // Method to extract Google token from OAuth2AuthenticationToken
     @Override
     protected void afterNavigation() {
         super.afterNavigation();
@@ -159,5 +157,18 @@ public class MainLayout extends AppLayout {
         return title == null ? "" : title.value();
     }
 
-
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+    }
+    private void navigateBasedOnUserRole(String userRole) {
+        if ("ADMIN".equals(userRole)) {
+            UI.getCurrent().navigate(AdminDashboardView.class);
+        } else if ("STUDENT".equals(userRole)) {
+            UI.getCurrent().navigate(StudentDashboardView.class);
+        } else {
+            // Handle other roles or redirect to a default view
+            UI.getCurrent().navigate(AboutView.class);
+        }
+    }
 }
