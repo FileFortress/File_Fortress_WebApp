@@ -29,7 +29,6 @@ import java.util.Timer;
 
 @PageTitle("Admin Dashboard")
 @Route(value = "admin_dashboard", layout = MainLayout.class)
-@RouteAlias(value = "", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;

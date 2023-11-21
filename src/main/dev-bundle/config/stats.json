@@ -242,8 +242,10 @@
   "@vaadin/vaadin-lumo-styles/style.js",
   "@vaadin/vaadin-lumo-styles/typography-global.js",
   "@vaadin/vaadin-lumo-styles/vaadin-iconset.js",
+  "@vaadin/vaadin-themable-mixin",
   "@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js",
   "@vaadin/virtual-list/theme/lumo/vaadin-virtual-list.js",
+  "Frontend//styles/login-view.css",
   "Frontend/generated/jar-resources/buttonFunctions.js",
   "Frontend/generated/jar-resources/comboBoxConnector.js",
   "Frontend/generated/jar-resources/contextMenuConnector.js",
@@ -258,6 +260,7 @@
   "Frontend/generated/jar-resources/menubarConnector.js",
   "Frontend/generated/jar-resources/messageListConnector.js",
   "Frontend/generated/jar-resources/selectConnector.js",
+  "Frontend/generated/jar-resources/theme-util.js",
   "Frontend/generated/jar-resources/tooltip.ts",
   "Frontend/generated/jar-resources/vaadin-big-decimal-field.js",
   "Frontend/generated/jar-resources/vaadin-grid-flow-selection-column.js",
@@ -268,6 +271,7 @@
  ],
  "frontendHashes": {
   "themes/my-app/components/vaadin-button.css": "fb360cc9c7c5892b8c5b186c0b057b22f61c20d55854706f4320938cd5dc0e01",
+  "styles/login-view.css": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "simple-timer.js": "9e132736a445a91efa952640fb7e1aebf1af34de044e0287c4a288f06a32b240",
   "buttonFunctions.js": "c852123f9b2c44eb75e555119d3e05a7dbe78b91d0ab616feb9df1654474707d",
   "comboBoxConnector.js": "1d004c3dae9c76f8bcc68678abe1b8f7bdc8b456f5c9c4c7f190df8ed25d66cd",
@@ -283,6 +287,7 @@
   "menubarConnector.js": "8ddac5a87155632c516fd16c9402bd9a2fe6d965998169743744842aacdfd412",
   "messageListConnector.js": "480d7092b9fe42aab45756eb4287b2c4b0d6e5d38514e967543bc5c317948c18",
   "selectConnector.js": "bd4277e735d390853603351ddd963233349b702789ddf8ce000df5179bb30523",
+  "theme-util.js": "828ba8154b5d2d762ade6ed6f0614691c68db929b69c3c54250858a077960ba3",
   "tooltip.ts": "b7e9af67169277b94cab722d244340c3a9d463bcf4de2aaa84dddcebbd59447b",
   "vaadin-big-decimal-field.js": "0e0f4e3bb8928c708d02e77d07ede09525102440511942e3b24721702352f140",
   "vaadin-grid-flow-selection-column.js": "722f2c602ba4105822db91efe67d1c4ade6892648f248f4cd176cebd02f54eff",
@@ -294,7 +299,7 @@
   "my-app": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-ab9c62ba.js"
+  "VAADIN/build/indexhtml-31ab07a4.js"
  ],
  "webComponents": [],
  "cvdlModules": {
@@ -329,6 +334,6 @@
  },
  "packageJsonHash": "3528802ccc0a0cc916ed0fe8fafed5b853e5f84c599e9fa068106d9f91aec8d5",
  "indexHtmlGenerated": [
-  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-ab9c62ba.js\"></script>"
+  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-31ab07a4.js\"></script>"
  ]
 }
