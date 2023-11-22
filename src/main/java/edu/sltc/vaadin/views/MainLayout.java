@@ -1,5 +1,9 @@
 package edu.sltc.vaadin.views;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -23,13 +27,22 @@ import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import edu.sltc.vaadin.views.setupexam.SetupExamView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
+import javax.management.Notification;
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -44,8 +57,28 @@ public class MainLayout extends AppLayout {
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
         this.authentication = SecurityContextHolder.getContext().getAuthentication();
-        OAuth2AuthenticatedPrincipal principal = (OAuth2AuthenticatedPrincipal)authentication.getPrincipal();
-        User.getInstance().init(principal);
+        Object principal = authentication.getPrincipal();
+        Object credentials = authentication.getCredentials();
+        System.out.println("Principal : " + principal);
+        System.out.println("Credentials : " + credentials);
+        if (principal instanceof OAuth2AuthenticatedPrincipal) {
+            OAuth2AuthenticatedPrincipal oAuthPrincipal = (OAuth2AuthenticatedPrincipal) principal;
+            User user = User.getInstance();
+            user.init(oAuthPrincipal);
+            System.out.println("Authorities: " + authentication.getAuthorities().stream().toList().get(0));
+            Collection<GrantedAuthority> updatedAuthorities = new ArrayList<>(authentication.getAuthorities());
+            if (!(updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_USER")))){
+
+                updatedAuthorities.add(new SimpleGrantedAuthority(user.getUserRole()));
+                // Create a new Authentication object with updated authorities
+                Authentication updatedAuthentication = new OAuth2AuthenticationToken(
+                        (OAuth2User) oAuthPrincipal, updatedAuthorities, "your-client-registration-id");
+
+                // Set the updated Authentication back to the SecurityContextHolder
+                SecurityContextHolder.getContext().setAuthentication(updatedAuthentication);
+            }
+            System.out.println("Updated Principle: "+SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+        }
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
@@ -72,25 +105,17 @@ public class MainLayout extends AppLayout {
 
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
-//        nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class, LineAwesomeIcon.CHART_AREA_SOLID.create()));
         if (accessChecker.hasAccess(AdminDashboardView.class)) {
             nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class, LineAwesomeIcon.CHART_AREA_SOLID.create()));
-
         }
         if (accessChecker.hasAccess(SetupExamView.class)) {
-            nav.addItem(
-                    new SideNavItem("Setup Exam", SetupExamView.class, LineAwesomeIcon.FILE_CONTRACT_SOLID.create()));
-
+            nav.addItem(new SideNavItem("Setup Exam", SetupExamView.class, LineAwesomeIcon.FILE_CONTRACT_SOLID.create()));
         }
         if (accessChecker.hasAccess(StudentDashboardView.class)) {
-            nav.addItem(new SideNavItem("Student Dashboard", StudentDashboardView.class,
-                    LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
-
+            nav.addItem(new SideNavItem("Student Dashboard", StudentDashboardView.class, LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
         }
         if (accessChecker.hasAccess(FileUploadView.class)) {
-            nav.addItem(
-                    new SideNavItem("File Upload", FileUploadView.class, LineAwesomeIcon.FILE_UPLOAD_SOLID.create()));
-
+            nav.addItem(new SideNavItem("File Upload", FileUploadView.class, LineAwesomeIcon.FILE_UPLOAD_SOLID.create()));
         }
         if (accessChecker.hasAccess(AboutView.class)) {
             nav.addItem(new SideNavItem("About", AboutView.class, LineAwesomeIcon.INFO_SOLID.create()));
@@ -102,7 +127,7 @@ public class MainLayout extends AppLayout {
     private Footer createFooter() {
         Footer layout = new Footer();
         User user = User.getInstance();
-        if (user != null) {
+        if (user.getAccessToken() != null) {
             Avatar avatar = new Avatar(user.getName());
             StreamResource resource = new StreamResource("profile-pic",
                     () -> new ByteArrayInputStream(user.getPictureUrl().getBytes()));
@@ -144,6 +169,7 @@ public class MainLayout extends AppLayout {
         UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
         logoutHandler.logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
+        User.getInstance().clearUserDetails();
     }
     // Method to extract Google token from OAuth2AuthenticationToken
     @Override
