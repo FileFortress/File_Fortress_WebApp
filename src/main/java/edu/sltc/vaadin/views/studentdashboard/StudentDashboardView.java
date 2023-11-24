@@ -9,6 +9,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -23,81 +24,79 @@ public class StudentDashboardView extends VerticalLayout {
 
     public StudentDashboardView() {
         setSpacing(false);
+        // Obtain the ExamModel instance
+        ExamModel examModel = ExamModel.getInstance();
+        if (examModel.getExamPaperName() != null){
+            /*
+             * module name
+             */
+            H1 header_one = new H1(examModel.getModuleName());
+            header_one.addClassNames(LumoUtility.Margin.Top.MEDIUM, LumoUtility.Margin.Bottom.XSMALL);
+            header_one.setWidthFull();
+            add(header_one);
 
-        /*
-         * module name
-         */
-        H1 header_one = new H1("Data Structures & Algorithm");
-        header_one.addClassNames(LumoUtility.Margin.Top.MEDIUM, LumoUtility.Margin.Bottom.XSMALL);
-        header_one.setWidthFull();
-        add(header_one);
+            /*
+             * module code
+             */
+            H2 header_two = new H2(examModel.getModuleCode());
+            header_two.addClassNames(LumoUtility.Margin.Top.XSMALL, LumoUtility.Margin.Bottom.MEDIUM);
+            header_two.setWidthFull();
+            add(header_two);
 
-        /*
-         * module code
-         */
-        H2 header_two = new H2("CCS 415");
-        header_two.addClassNames(LumoUtility.Margin.Top.XSMALL, LumoUtility.Margin.Bottom.MEDIUM);
-        header_two.setWidthFull();
-        add(header_two);
+            Div moduleDetails = new Div();
+            moduleDetails.setMaxWidth("800px");
+            moduleDetails.addClassNames(LumoUtility.Margin.Top.SMALL, LumoUtility.Margin.Bottom.LARGE);
+            add(moduleDetails);
 
+            FormLayout formLayout = new FormLayout();
+            formLayout.setMaxWidth("600px");
+            moduleDetails.add(formLayout);
 
-        Div moduleDetails = new Div();
-        moduleDetails.setMaxWidth("800px");
-        moduleDetails.addClassNames(LumoUtility.Margin.Top.SMALL, LumoUtility.Margin.Bottom.LARGE);
-        add(moduleDetails);
+            /*
+             * start time
+             */
+            Span start_time = new Span("Start Time : " + examModel.getStartTime());
+            formLayout.add(start_time);
 
-        FormLayout formLayout = new FormLayout();
-        formLayout.setMaxWidth("600px");
-        moduleDetails.add(formLayout);
+            /*
+             * end time
+             */
+            Span end_time = new Span("End Time : " + examModel.getEndTime());
+            formLayout.add(end_time);
 
-        /*
-         * start time
-         */
-        Span start_time = new Span("Start Time : 2:00 PM");
-        formLayout.add(start_time);
+            /*
+             * Timer
+             */
+            Div remainingTimeDiv = new Div();
+            H2 remainingTime = new H2("Remaining Time");
+            add(remainingTime);
+            add(createTimerLayout());
 
-        /*
-         * end time
-         */
-        Span end_time = new Span("End Time : 4:00 PM");
-        formLayout.add(end_time);
+            /*
+             * Exam Instructions
+             */
+            TextArea examInstructions = new TextArea("Exam Instructions");
+            examInstructions.setHeight("500px");
+            examInstructions.setMaxWidth("1000px");
+            examInstructions.setValue(examModel.getModuleDescription());
+            examInstructions.setReadOnly(true);
+            examInstructions.setWidthFull();
+            add(examInstructions);
 
+            formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
+                    new FormLayout.ResponsiveStep("350px", 2));
 
-        /*
-         * Timer
-         */
-        Div remainingTimeDiv = new Div();
-        H2 remainingTime = new H2("Remaining Time");
-        add(remainingTime);
-        add(createTimerLayout());
-
-        /*
-         * Exam Instructions
-         */
-        TextArea examInstructions = new TextArea("Exam Instructions");
-        examInstructions.setHeight("500px");
-        examInstructions.setMaxWidth("1000px");
-        examInstructions.setValue(
-                "Important Instructions to the candidates \n" +
-                        "● The mode of the exam will be in the form of an online, open book examination \n" +
-                        "● If a page or a part of this question paper is not printed, please inform the supervisor ,invigilator or the examination unit via the hotlines provided \n" +
-                        "● Candidate's registration number, Module code and Module Name should be written clearly and legibly on all answer sheets \n" +
-                        "● Candidates must not seek, give or receive assistance of any kind during the exam. Any cheating,");
-        examInstructions.setReadOnly(true);
-        examInstructions.setWidthFull();
-        add(examInstructions);
-
-
-        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("350px", 2));
-
-        /*
-         * Late Submission
-         */
-        Span Late_submission = new Span("No Late Submission Allowed");
-        Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
-        add(Late_submission);
-        formLayout.setColspan(Late_submission, 2);
+            /*
+             * Late Submission
+             */
+            Span Late_submission = new Span("No Late Submission Allowed");
+            Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
+            add(Late_submission);
+            formLayout.setColspan(Late_submission, 2);
+        } else {
+            H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
+            add(errorHeader);
+        }
 
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);

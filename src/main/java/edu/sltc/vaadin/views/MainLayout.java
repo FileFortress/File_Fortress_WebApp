@@ -48,7 +48,6 @@ import java.util.Collection;
  * The main view is a top-level placeholder for other views.
  */
 public class MainLayout extends AppLayout {
-
     private static final String LOGOUT_SUCCESS_URL = "/login";
     private H2 viewTitle;
     private AccessAnnotationChecker accessChecker;
