@@ -1,7 +1,9 @@
 package edu.sltc.vaadin.views.setupexam;
 
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.html.Div;
@@ -19,17 +21,26 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
+import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.views.MainLayout;
+import edu.sltc.vaadin.views.about.AboutView;
+import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import jakarta.annotation.security.RolesAllowed;
+
+import java.time.LocalTime;
 
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class SetupExamView extends VerticalLayout {
-
+    private TextField moduleCode, moduleName;
+    private TextArea moduleDescription;
+    private  RadioButtonGroup<String> lateSubmission;
+    private TimePicker startTimePicker, endTimePicker;
+    private Button startServer;
     public SetupExamView() {
         setSpacing(false);
-
+        ExamModel examModel = ExamModel.getInstance(); // Get the ExamModel instance
         H2 header = new H2("Exam Paper Registration");
         header.addClassNames(Margin.Top.LARGE, Margin.Bottom.MEDIUM);
         add(header);
@@ -43,27 +54,26 @@ public class SetupExamView extends VerticalLayout {
         formLayout.setMaxWidth("600px");
         moduleDetails.add(formLayout);
 
-        TextField moduleCode = new TextField("Module Code");
+        moduleCode = new TextField("Module Code");
         formLayout.add(moduleCode);
 
-        TextField moduleName = new TextField("Module Name");
+        moduleName = new TextField("Module Name");
         formLayout.add(moduleName);
 
-        TextArea moduleDescription = new TextArea("Module Description");
+        moduleDescription = new TextArea("Module Description");
         moduleDescription.setHeight("100px");
         formLayout.add(moduleDescription);
         formLayout.setColspan(moduleDescription, 2);
 
-        RadioButtonGroup<String> lateSubmission =  new RadioButtonGroup<>();
+        lateSubmission =  new RadioButtonGroup<>();
         lateSubmission.setLabel("Late Submission");
         lateSubmission.setItems("NO", "10 Minutes", "15 Minutes", "20 Minutes", "25 Minutes","30 Minutes");
         lateSubmission.setValue("15 Minutes");
         formLayout.add(lateSubmission);
         formLayout.setColspan(lateSubmission, 2);
 
-
-        TimePicker startTimePicker = new TimePicker("Start Time");
-        TimePicker endTimePicker = new TimePicker("End Time");
+        startTimePicker = new TimePicker("Start Time");
+        endTimePicker = new TimePicker("End Time");
 
         endTimePicker.addClassNames(Margin.Top.SMALL, Margin.Bottom.SMALL);
 
@@ -73,8 +83,25 @@ public class SetupExamView extends VerticalLayout {
         formLayout.add(upload);
         formLayout.setColspan(upload, 2);
 
-        Button startServer = new Button("Start Server");
-        startServer.addClickListener(e -> startServer());
+        // Set ExamModel data to the view
+        startServer = new Button("Start Server");
+        startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
+                ButtonVariant.LUMO_SUCCESS);
+        startServer.addClickListener(e -> {
+            ExamModel.serverIsRunning = !ExamModel.serverIsRunning;
+            if (ExamModel.serverIsRunning){
+                startServer();
+                startServer.setText("Stop Server");
+                startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            }else{
+                startServer.setText("Start Server");
+                startServer.removeThemeVariants(ButtonVariant.LUMO_ERROR);
+                startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
+                        ButtonVariant.LUMO_SUCCESS);
+            }
+            System.out.println("Server State is "+ExamModel.serverIsRunning);
+        });
+        setExamModelData(examModel);
         add(startServer);
 
         formLayout.setResponsiveSteps(new ResponsiveStep("0", 1),
@@ -99,6 +126,7 @@ public class SetupExamView extends VerticalLayout {
         upload.addFinishedListener(event -> {
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
+            ExamModel.getInstance().setExamPaperName(event.getFileName());
             Notification notification = Notification
                     .show(event.getFileName()+" File uploaded successfully!");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -108,8 +136,47 @@ public class SetupExamView extends VerticalLayout {
         return upload;
     }
 
+    private void setExamModelData(ExamModel examModel) {
+        // Check if ExamPaperName is not null and show saved details
+        if (examModel.getExamPaperName() != null) {
+            // Set ExamModel data to the view
+            moduleCode.setValue(examModel.getModuleCode());
+            moduleName.setValue(examModel.getModuleName());
+            moduleDescription.setValue(examModel.getModuleDescription());
+            lateSubmission.setValue(examModel.getLateSubmission());
+            startTimePicker.setValue(examModel.getStartTime());
+            endTimePicker.setValue(examModel.getEndTime());
+            if (ExamModel.serverIsRunning){
+                startServer.setText("Stop Server");
+                startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            }
+        }
+    }
+
+
     private void startServer() {
         // Implement your server start logic here
+        // Obtain user input data
+        String moduleCodeValue = moduleCode.getValue();
+        String moduleNameValue = moduleName.getValue();
+        String moduleDescriptionValue = moduleDescription.getValue();
+        String lateSubmissionValue = lateSubmission.getValue();
+        LocalTime startTimeValue = startTimePicker.getValue();
+        LocalTime endTimeValue = endTimePicker.getValue();
+
+        ExamModel examModel = ExamModel.getInstance();
+        // Save data to the ExamModel
+        examModel.setModuleCode(moduleCodeValue);
+        examModel.setModuleName(moduleNameValue);
+        examModel.setModuleDescription(moduleDescriptionValue);
+        examModel.setLateSubmission(lateSubmissionValue);
+        examModel.setStartTime(startTimeValue);
+        examModel.setEndTime(endTimeValue);
+
+        System.out.println(examModel);
+        // Display success message or navigate to the student dashboard
+        Notification.show("Exam details saved successfully!");
+//        UI.getCurrent().navigate(AdminDashboardView.class);
     }
 
 }

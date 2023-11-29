@@ -21,10 +21,7 @@ import edu.sltc.vaadin.views.about.AboutView;
 @Route(value = "login")
 @CssImport("/styles/login-view.css")
 public class LoginView extends VerticalLayout implements BeforeEnterObserver{
-    //    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-//    private String clientId;
     private static final String OAUTH_URL = "/oauth2/authorization/google";
-
     public LoginView(){
         // Header
         Div header = new Div();
