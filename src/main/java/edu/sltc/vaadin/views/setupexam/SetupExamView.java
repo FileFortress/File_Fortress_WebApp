@@ -20,12 +20,15 @@ import com.vaadin.flow.component.upload.FinishedEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.views.MainLayout;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
+import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalTime;
 
@@ -34,10 +37,11 @@ import java.time.LocalTime;
 @RolesAllowed("ADMIN")
 public class SetupExamView extends VerticalLayout {
     private TextField moduleCode, moduleName;
-    private TextArea moduleDescription;
+    private TextArea moduleDescription, studentEmailList;
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
+
     public SetupExamView() {
         setSpacing(false);
         ExamModel examModel = ExamModel.getInstance(); // Get the ExamModel instance
@@ -78,6 +82,13 @@ public class SetupExamView extends VerticalLayout {
         endTimePicker.addClassNames(Margin.Top.SMALL, Margin.Bottom.SMALL);
 
         formLayout.add(startTimePicker, endTimePicker);
+
+
+        studentEmailList = new TextArea("Student Emails List");
+        studentEmailList.setHeight("100px");
+        formLayout.add(studentEmailList);
+        formLayout.setColspan(studentEmailList, 2);
+
         Upload upload = getUpload();
         // Add the upload component to the layout of the UI
         formLayout.add(upload);
@@ -177,6 +188,8 @@ public class SetupExamView extends VerticalLayout {
         // Display success message or navigate to the student dashboard
         Notification.show("Exam details saved successfully!");
 //        UI.getCurrent().navigate(AdminDashboardView.class);
+
+        // Update Student Dashboard views for all connected clients
     }
 
 }

@@ -7,6 +7,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.login.LoginForm;
+import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -16,50 +19,38 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import edu.sltc.vaadin.views.about.AboutView;
 
+import java.util.Collections;
+
 @AnonymousAllowed
 @PageTitle("Login")
 @Route(value = "login")
 @CssImport("/styles/login-view.css")
-public class LoginView extends VerticalLayout implements BeforeEnterObserver{
-    private static final String OAUTH_URL = "/oauth2/authorization/google";
-    public LoginView(){
-        // Header
-        Div header = new Div();
-        header.setText("Welcome to File Fortress");
-        header.getStyle().set("font-size", "24px");
-        add(header);
+public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
-        // Slogan
-        Div slogan = new Div();
-        slogan.setText("LAN Exam File Transfer System");
-        slogan.getStyle().set("font-size", "18px");
-        add(slogan);
+    public LoginView() {
+        LoginI18n i18n = LoginI18n.createDefault();
+        i18n.setHeader(new LoginI18n.Header());
+        i18n.getHeader().setTitle("File Fortress");
+        i18n.getHeader().setDescription("Login using Your Campus Email and Given Password");
+        i18n.setAdditionalInformation(null);
+        setI18n(i18n);
+        setForgotPasswordButtonVisible(false);
+        setOpened(true);
+        setAction("login");
 
-        // Description
-        Div description = new Div();
-        description.setText("Login with Your Google Account to Continue");
-        description.getStyle().set("font-size", "16px");
-        add(description);
-
-        // Login button
-        Button loginButton = new Button("Login with Google");
-        loginButton.setTooltipText("You Can Sign In to Application using your Google Account");
-        loginButton.addClassName("login-button");
-        loginButton.addClickListener(event -> {
-            // Redirect to OAUTH_URLAnchor
-            UI.getCurrent().getPage().setLocation(OAUTH_URL);
-        });
-
-        add(loginButton);
-
-        // Styling
-        getStyle().set("padding", "20px");
-        setAlignItems(FlexComponent.Alignment.CENTER);
+//        addLoginListener(new ComponentEventListener<LoginEvent>() {
+//            @Override
+//            public void onComponentEvent(LoginEvent loginEvent) {
+//
+//            }
+//        });
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-//    UI.getCurrent().navigate(AboutView.class);
+        if (!event.getLocation().getQueryParameters().getParameters().getOrDefault("error", Collections.emptyList()).isEmpty()){
+            setError(event.getLocation().getQueryParameters().getParameters().containsKey("error"));
+        }
     }
 
 }

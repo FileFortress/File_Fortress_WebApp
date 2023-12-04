@@ -21,26 +21,23 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import edu.sltc.vaadin.data.User;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import edu.sltc.vaadin.views.setupexam.SetupExamView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
-import javax.management.Notification;
-import java.io.ByteArrayInputStream;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -60,24 +57,17 @@ public class MainLayout extends AppLayout {
         Object credentials = authentication.getCredentials();
         System.out.println("Principal : " + principal);
         System.out.println("Credentials : " + credentials);
-        if (principal instanceof OAuth2AuthenticatedPrincipal) {
-            OAuth2AuthenticatedPrincipal oAuthPrincipal = (OAuth2AuthenticatedPrincipal) principal;
-            User user = User.getInstance();
-            user.init(oAuthPrincipal);
-            System.out.println("Authorities: " + authentication.getAuthorities().stream().toList().get(0));
-            Collection<GrantedAuthority> updatedAuthorities = new ArrayList<>(authentication.getAuthorities());
-            if (!(updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_USER")))){
+        System.out.println("Authorities: " + authentication.getAuthorities().stream().toList().get(0));
+//        Collection<GrantedAuthority> updatedAuthorities = new ArrayList<>(authentication.getAuthorities());
+//        if (!(updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || updatedAuthorities.contains(new SimpleGrantedAuthority("ROLE_USER")))){
+//            updatedAuthorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+//            // Create a new Authentication object with updated authorities
+//            Authentication updatedAuthentication = new AnonymousAuthenticationToken("Nuyun",principal,updatedAuthorities);
+//            // Set the updated Authentication back to the SecurityContextHolder
+//            SecurityContextHolder.getContext().setAuthentication(updatedAuthentication);
+//        }
+//        System.out.println("Updated Principle: "+SecurityContextHolder.getContext().getAuthentication().getAuthorities());
 
-                updatedAuthorities.add(new SimpleGrantedAuthority(user.getUserRole()));
-                // Create a new Authentication object with updated authorities
-                Authentication updatedAuthentication = new OAuth2AuthenticationToken(
-                        (OAuth2User) oAuthPrincipal, updatedAuthorities, "your-client-registration-id");
-
-                // Set the updated Authentication back to the SecurityContextHolder
-                SecurityContextHolder.getContext().setAuthentication(updatedAuthentication);
-            }
-            System.out.println("Updated Principle: "+SecurityContextHolder.getContext().getAuthentication().getAuthorities());
-        }
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
@@ -125,12 +115,8 @@ public class MainLayout extends AppLayout {
 
     private Footer createFooter() {
         Footer layout = new Footer();
-        User user = User.getInstance();
-        if (user.getAccessToken() != null) {
-            Avatar avatar = new Avatar(user.getName());
-            StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(user.getPictureUrl().getBytes()));
-            avatar.setImageResource(resource);
+        if (authentication.getName() != "anonymousUser") {
+            Avatar avatar = new Avatar(authentication.getName());
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");
             avatar.getStyle().setMargin("10px");
@@ -146,11 +132,10 @@ public class MainLayout extends AppLayout {
             //<theme-editor-local-classname>
             div.addClassName("main-layout-div-1");
             div.add(avatar);
-            div.add(user.getGivenName());
+            div.add(authentication.getName());
             div.add(icon);
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");
-//            div.getElement().getStyle().set("gap", "var(--lumo-space-s)");
             userName.add(div);
             userName.getSubMenu().addItem("Sign out", e -> {
                 logout();
@@ -168,7 +153,6 @@ public class MainLayout extends AppLayout {
         UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
         logoutHandler.logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
-        User.getInstance().clearUserDetails();
     }
     // Method to extract Google token from OAuth2AuthenticationToken
     @Override
