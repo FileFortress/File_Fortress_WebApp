@@ -115,7 +115,7 @@ public class MainLayout extends AppLayout {
 
     private Footer createFooter() {
         Footer layout = new Footer();
-        if (authentication.getName() != "anonymousUser") {
+        if ( authentication.getName() != "anonymousUser" ) {
             Avatar avatar = new Avatar(authentication.getName());
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");

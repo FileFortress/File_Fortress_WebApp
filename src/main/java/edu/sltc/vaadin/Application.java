@@ -3,6 +3,8 @@ package edu.sltc.vaadin;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
+import edu.sltc.vaadin.data.PasswordGenerator;
+import edu.sltc.vaadin.models.PasswordPool;
 import edu.sltc.vaadin.services.EmailExtractor;
 import edu.sltc.vaadin.services.EmailSenderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,6 @@ public class Application implements AppShellConfigurator {
 
     @EventListener(ApplicationReadyEvent.class)
     public void sendEmailsToAdmins(){
-//        senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service",new ArrayList<>(List.of("nuyun123", "harindu123")));
+        senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service", PasswordPool.getInstance().getAdminPasswords());
     }
 }

@@ -5,7 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Nuyun-Kalamullage
@@ -30,13 +33,14 @@ public class EmailSenderService {
             System.out.println("Mail Sending Successful!!");
         }
 
-        public void sendBulkEmails(List<String> toEmails, String subject, List<String> body) {
+        public void sendBulkEmails(List<String> toEmails, String subject, Set<String> body) {
             int i = 0;
+            ArrayList<String> passwordList = new ArrayList<>(body);
             for (String toEmail : toEmails) {
                 SimpleMailMessage message = new SimpleMailMessage();
                 message.setTo(toEmail);
                 message.setSubject(subject);
-                message.setText(body.get(i++));
+                message.setText(passwordList.get(i++));
                 javaMailSender.send(message);
             }
             System.out.println("Mails Sending Successful!!");

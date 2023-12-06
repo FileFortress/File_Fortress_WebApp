@@ -1,6 +1,8 @@
 package edu.sltc.vaadin.security;
 
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import edu.sltc.vaadin.data.PasswordGenerator;
+import edu.sltc.vaadin.models.PasswordPool;
 import edu.sltc.vaadin.views.login.LoginView;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +26,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 @EnableWebSecurity
 @Configuration
@@ -45,11 +48,13 @@ public class SecurityConfiguration extends VaadinWebSecurity {
         super.configure(http);
         setLoginView(http, LoginView.class, "/");
     }
-    @Bean
+ @Bean
     UserDetailsManager userDetailsManager(){
+     PasswordPool.getInstance().setAdminPasswords(PasswordGenerator.bulkPasswordForExaminers(2));
         return new InMemoryUserDetailsManager(
                 User.withUsername("nuyunpabasara457@gmail.com").password(passwordEncoder().encode("nuyun123")).roles("ADMIN").build(),
-                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode("nuyun3")).roles("USER").build()
+                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build()
         );
     }
+
 }

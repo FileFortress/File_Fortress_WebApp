@@ -23,12 +23,17 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.services.EmailSenderService;
 import edu.sltc.vaadin.views.MainLayout;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import java.time.LocalTime;
 
@@ -36,6 +41,10 @@ import java.time.LocalTime;
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class SetupExamView extends VerticalLayout {
+    @Autowired
+    private EmailSenderService senderService;
+    @Autowired
+    private InMemoryUserDetailsManager userDetailsManager;
     private TextField moduleCode, moduleName;
     private TextArea moduleDescription, studentEmailList;
     private  RadioButtonGroup<String> lateSubmission;
@@ -188,8 +197,17 @@ public class SetupExamView extends VerticalLayout {
         // Display success message or navigate to the student dashboard
         Notification.show("Exam details saved successfully!");
 //        UI.getCurrent().navigate(AdminDashboardView.class);
+//        InMemoryUserDetailsManager userDetailsManager = VaadinSession.getCurrent().getBean(InMemoryUserDetailsManager.class);
 
-        // Update Student Dashboard views for all connected clients
+
+
+        //give access to students and have to add user to InMemoryUserDetailsManager
+        String defaultPassword = "harindu123";
+        senderService.sendEmail("nuyunpabasara@gmail.com", "User Password", defaultPassword);
+        userDetailsManager.createUser(User.withUsername("nuyun457@gmail.com")
+                .password(new BCryptPasswordEncoder().encode(defaultPassword))
+                .roles("USER")
+                .build());
     }
 
 }
