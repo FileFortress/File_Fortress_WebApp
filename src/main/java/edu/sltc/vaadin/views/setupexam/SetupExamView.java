@@ -200,7 +200,6 @@ public class SetupExamView extends VerticalLayout {
 //        InMemoryUserDetailsManager userDetailsManager = VaadinSession.getCurrent().getBean(InMemoryUserDetailsManager.class);
 
 
-
         //give access to students and have to add user to InMemoryUserDetailsManager
         String defaultPassword = "harindu123";
         senderService.sendEmail("nuyunpabasara@gmail.com", "User Password", defaultPassword);

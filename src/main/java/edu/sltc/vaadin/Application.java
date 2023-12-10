@@ -12,6 +12,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.EventListener;
 
 import java.util.ArrayList;
@@ -24,13 +25,19 @@ import java.util.List;
  * and some desktop browsers.
  *
  */
+
 @SpringBootApplication(exclude = ErrorMvcAutoConfiguration.class)
 @Theme(value = "my-app", variant = Lumo.DARK)
+@PropertySource("classpath:application.properties")
 public class Application implements AppShellConfigurator {
     @Autowired
     private EmailSenderService senderService;
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+//      SpringApplication.run(Application.class, args);
+        SpringApplication application = new SpringApplication(Application.class);
+        application.setAdditionalProfiles("ssl");
+        application.run(args);
+
     }
 
     @EventListener(ApplicationReadyEvent.class)

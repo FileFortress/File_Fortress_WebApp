@@ -1,11 +1,17 @@
 package edu.sltc.vaadin.views.studentdashboard;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -20,7 +26,11 @@ import java.time.temporal.ChronoUnit;
 @Route(value = "student_dashboard", layout = MainLayout.class)
 //@RouteAlias(value = "", layout = MainLayout.class)
 @RolesAllowed("USER")
+//@JsModule()
 public class StudentDashboardView extends VerticalLayout {
+    private TextField otpField;
+    private final int otp = 2045;
+    private Dialog dialog;
 
     public StudentDashboardView() {
         setSpacing(false);
@@ -34,7 +44,6 @@ public class StudentDashboardView extends VerticalLayout {
             header_one.addClassNames(LumoUtility.Margin.Top.MEDIUM, LumoUtility.Margin.Bottom.XSMALL);
             header_one.setWidthFull();
             add(header_one);
-
             /*
              * module code
              */
@@ -98,6 +107,7 @@ public class StudentDashboardView extends VerticalLayout {
             add(errorHeader);
         }
 
+        showOtpDialog();
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
@@ -147,6 +157,57 @@ public class StudentDashboardView extends VerticalLayout {
         // Return the remaining time as a string
 //        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
         return new SimpleTimer(seconds);
+    }
+
+    private void showOtpDialog() {
+        dialog = new Dialog();
+        dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");
+        // Create dialog layout
+        VerticalLayout dialogLayout = createDialogLayout();
+        dialog.add(dialogLayout);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        // Show the dialog
+        dialog.open();
+    }
+
+    private VerticalLayout createDialogLayout() {
+        H2 headline = new H2("Enter Exam OTP");
+        headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
+                .set("font-size", "1.5em").set("font-weight", "bold");
+
+        // Add an OTP input field
+        otpField = new TextField("OTP");
+        VerticalLayout fieldLayout = new VerticalLayout(otpField);
+        fieldLayout.setSpacing(false);
+        fieldLayout.setPadding(false);
+        fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+        VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout);
+        dialogLayout.setPadding(false);
+        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
+        // Add "Login" button to the dialog
+        Button loginButton = new Button("Login", e -> {
+            // Perform login action here
+            performLogin();
+        });
+        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        dialogLayout.add(loginButton);
+
+        return dialogLayout;
+    }
+
+    private void performLogin() {
+        // Implement your login logic here
+        // Check OTP and proceed with login
+        int enteredOtp = Integer.parseInt(otpField.getValue());
+        if (enteredOtp == otp) {
+            // Continue with login logic
+            dialog.close();
+        } else {
+            // Display an error message for incorrect OTP
+            otpField.setErrorMessage("Enter Valid OTP!");
+        }
     }
 
 }

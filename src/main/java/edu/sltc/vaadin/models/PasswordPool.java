@@ -11,6 +11,7 @@ import java.util.Set;
  */
 public class PasswordPool {
     private static PasswordPool instance;
+    private Set<String> adminEmails, studentEmails;
     private Set<String> adminPasswords, studentPasswords;
     private PasswordPool() {
     }
@@ -40,6 +41,23 @@ public class PasswordPool {
     public void setStudentPasswords(Set<String> studentPasswords) {
         this.studentPasswords = studentPasswords;
     }
+
+    public Set<String> getAdminEmails() {
+        return adminEmails;
+    }
+
+    public void setAdminEmails(Set<String> adminEmails) {
+        this.adminEmails = adminEmails;
+    }
+
+    public Set<String> getStudentEmails() {
+        return studentEmails;
+    }
+
+    public void setStudentEmails(Set<String> studentEmails) {
+        this.studentEmails = studentEmails;
+    }
+
     public static void clearPasswordPool(){
         instance = null;
         System.gc();

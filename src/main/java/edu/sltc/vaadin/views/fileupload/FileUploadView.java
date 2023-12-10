@@ -2,7 +2,11 @@ package edu.sltc.vaadin.views.fileupload;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -24,6 +28,10 @@ import jakarta.annotation.security.RolesAllowed;
 @Route(value = "file_transfer", layout = MainLayout.class)
 @RolesAllowed("USER")
 public class FileUploadView extends HorizontalLayout {
+
+    private TextField otpField;
+    private final int otp = 2045;
+    private Dialog dialog;
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
@@ -50,9 +58,9 @@ public class FileUploadView extends HorizontalLayout {
         submitButton.setWidthFull();
         layout.add(upload,answerValidationCheckBox,submitButton);
         add(layout);
-
-
+        showOtpDialog();
     }
+
     private static Upload getUpload() {
 
         Button uploadPDF = new Button("Upload PDF");
@@ -78,5 +86,60 @@ public class FileUploadView extends HorizontalLayout {
             notification.setDuration(2500);
         });
         return upload;
+    }
+    private void showOtpDialog() {
+        dialog = new Dialog();
+        dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");
+        // Create dialog layout
+        VerticalLayout dialogLayout = createDialogLayout();
+        dialog.add(dialogLayout);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        // Show the dialog
+        dialog.open();
+    }
+
+    private VerticalLayout createDialogLayout() {
+        H2 headline = new H2("Enter Exam OTP");
+        headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
+                .set("font-size", "1.5em").set("font-weight", "bold");
+
+        // Add an OTP input field
+        otpField = new TextField("OTP");
+        VerticalLayout fieldLayout = new VerticalLayout(otpField);
+        fieldLayout.setSpacing(false);
+        fieldLayout.setPadding(false);
+        fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+        VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout);
+        dialogLayout.setPadding(false);
+        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
+        // Add "Login" button to the dialog
+        Button loginButton = new Button("Login", e -> {
+            // Perform login action here
+            performLogin();
+        });
+        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        dialogLayout.add(loginButton);
+
+        return dialogLayout;
+    }
+
+    private void performLogin() {
+        // Implement your login logic here
+        // Check OTP and proceed with login
+        try {
+            int enteredOtp = Integer.parseInt(otpField.getValue());
+            if (enteredOtp == otp) {
+                // Continue with login logic
+                dialog.close();
+            } else {
+                // Display an error message for incorrect OTP
+                otpField.setErrorMessage("Enter Valid OTP!");
+            }
+        }catch (NumberFormatException e){
+            otpField.setErrorMessage("Enter Valid OTP!");
+        }
+
     }
 }
