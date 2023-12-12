@@ -1,6 +1,8 @@
 package edu.sltc.vaadin.views.admindashboard;
 
+import ch.qos.logback.core.Context;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -9,11 +11,16 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.Command;
+import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -24,9 +31,11 @@ import java.util.TimerTask;
 @PageTitle("Admin Dashboard")
 @Route(value = "admin_dashboard", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
+@JsModule("adminDashboard.js")
 public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;
     private TextField WifiTextField, ServerUrlTextField, JoinedStudentsTextField, submissionCountTextField;
+    private UI ui;
     private Timer timer;
     public AdminDashboardView() {
         setSpacing(false);
@@ -68,11 +77,31 @@ public class AdminDashboardView extends VerticalLayout {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
-
         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-        ServerUrlTextField.setValue("https://"+CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription())+":80");
+        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":80" );
         JoinedStudentsTextField.setValue("25");
         submissionCountTextField.setValue("10");
+        ui = UI.getCurrent();
+        Timer wifiTimer = new Timer(true);
+        wifiTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                ui.access(new Command() {
+                    @Override
+                    public void execute() {
+                        WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
+                        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":80" );
+                        // Set push mode to MANUAL to enable background updates
+                        ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
+                        // Push an empty update to trigger a background refresh
+                        ui.push();
+                        // Set push mode back to AUTOMATIC (optional)
+                        ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
+                    }
+                });
+
+            }
+        },0,5000);
 
     }
     private Div createTimerLayout() {
