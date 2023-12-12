@@ -37,7 +37,8 @@ public class publicIPTest {
                         System.out.println("IPv4 Address on " + iface.getDisplayName() + ": " + address.getHostAddress() + " : is Site Local " + address.isSiteLocalAddress());
                         // Retrieve SSID for Wi-Fi
                         String ssid = getWifiSSID();
-                        System.out.println("Wi-Fi SSID: " + ssid);}
+                        System.out.println("Wi-Fi SSID: " + ssid);
+                    }
                     }
 
             }
