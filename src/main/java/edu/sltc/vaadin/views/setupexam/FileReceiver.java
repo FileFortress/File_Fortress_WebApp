@@ -20,13 +20,16 @@ public class FileReceiver implements Receiver {
     @Override
     public OutputStream receiveUpload(String fileName, String MIMEType) {
         // Define the file where the uploaded file will be stored
-        File file = new File(fileName);
+        if (MIMEType.equals("application/pdf")){
+            File file = new File(fileName);
         // Create an output stream to write the uploaded file to the file system
         try {
             return new FileOutputStream(encryptFile(file));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+        }
+        return null;
     }
 
     private File encryptFile(File file) {
