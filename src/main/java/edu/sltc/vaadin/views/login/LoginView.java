@@ -37,7 +37,6 @@ import java.util.Collections;
 @CssImport("/styles/login-view.css")
 @JsModule("./loginView.js")
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
-
     private LoginOverlay loginOverlay;
 
     @Autowired
@@ -64,14 +63,11 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         return passwordEncoder.encode(plainText);
     }
 
-      @Override
+    @Override
     public void beforeEnter(BeforeEnterEvent event) {
         if (!event.getLocation().getQueryParameters().getParameters().getOrDefault("error", Collections.emptyList()).isEmpty()){
             loginOverlay.setError(event.getLocation().getQueryParameters().getParameters().containsKey("error"));
         }
-//        if (SecurityContextHolder.getContext().getAuthentication().isAuthenticated()){
-//            UI.getCurrent().navigate(AboutView.class);
-//        }
     }
 
 }

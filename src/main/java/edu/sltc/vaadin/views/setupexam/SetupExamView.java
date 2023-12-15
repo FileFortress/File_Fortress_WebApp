@@ -18,12 +18,14 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.FinishedEvent;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.services.EmailSenderService;
+import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.views.MainLayout;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
@@ -136,7 +138,8 @@ public class SetupExamView extends VerticalLayout {
         Button uploadPDF = new Button("Upload PDF");
         Upload upload = new Upload();
         // Define the file receiver that will handle the file upload
-        upload.setReceiver(new FileReceiver());
+        MemoryBuffer memoryBuffer = new MemoryBuffer();
+        upload.setReceiver(memoryBuffer);
         // Define the accepted file types. In this case, only PDF files are accepted.
 //        upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Exam Paper");
@@ -144,6 +147,7 @@ public class SetupExamView extends VerticalLayout {
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addFinishedListener(event -> {
+            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             ExamModel.getInstance().setExamPaperName(event.getFileName());
