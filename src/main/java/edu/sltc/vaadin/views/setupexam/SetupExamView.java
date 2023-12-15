@@ -138,7 +138,7 @@ public class SetupExamView extends VerticalLayout {
         // Define the file receiver that will handle the file upload
         upload.setReceiver(new FileReceiver());
         // Define the accepted file types. In this case, only PDF files are accepted.
-        upload.setAcceptedFileTypes("application/pdf");
+//        upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Exam Paper");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
