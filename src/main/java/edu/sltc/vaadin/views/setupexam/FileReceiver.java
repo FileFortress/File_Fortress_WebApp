@@ -24,7 +24,6 @@ public class FileReceiver implements Receiver {
     @Override
     public OutputStream receiveUpload(String fileName, String MIMEType) {
         // Define the file where the uploaded file will be stored
-
         if (MIMEType.equals("application/pdf")){
             File file = new File(fileName);
             // Create an output stream to write the uploaded file to the file system
@@ -44,7 +43,6 @@ public class FileReceiver implements Receiver {
             }
         }
         return null;
-
     }
 
     private File encryptFile(File file) { // file encrypt using rsa
@@ -53,8 +51,6 @@ public class FileReceiver implements Receiver {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-
         return file;
     }
 
