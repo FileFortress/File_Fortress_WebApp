@@ -3,12 +3,10 @@ package edu.sltc.vaadin.views.setupexam;
 import com.vaadin.flow.component.upload.Receiver;
 import edu.sltc.vaadin.services.FileEncryptionService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.crypto.CipherOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 
 /**
@@ -49,4 +47,19 @@ public class FileReceiver implements Receiver {
         }
     }
 
+    public String save(File file) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream("src/main/resources/examFile.pdf");
+             FileInputStream inputStream = new FileInputStream( file)){
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                fileOutputStream.write(buffer, 0, bytesRead);
+            }
+            return file.getName();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

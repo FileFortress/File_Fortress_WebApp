@@ -22,11 +22,9 @@ public class FileEncryptionService {
     private static final SecretKey SECRET_KEY = AESKeyGenerator.getInstance().getSecretKey();
     public static void encryptFile(InputStream inputStream, String outputFilePath) throws RuntimeException{
         try (FileOutputStream fileOutputStream = new FileOutputStream(outputFilePath)) {
-
             Key secretKey = new SecretKeySpec(SECRET_KEY.getEncoded(), ALGORITHM);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            System.out.println("Partially Done");
             try (CipherOutputStream cipherOutputStream = new CipherOutputStream(fileOutputStream, cipher)) {
                 byte[] buffer = new byte[1024];
                 int bytesRead;

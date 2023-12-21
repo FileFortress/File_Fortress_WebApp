@@ -247,6 +247,7 @@
   "@vaadin/virtual-list/theme/lumo/vaadin-virtual-list.js",
   "Frontend//styles/login-view.css",
   "Frontend/adminDashboard.js",
+  "Frontend/fileUploader.js",
   "Frontend/generated/jar-resources/buttonFunctions.js",
   "Frontend/generated/jar-resources/comboBoxConnector.js",
   "Frontend/generated/jar-resources/contextMenuConnector.js",
@@ -302,7 +303,7 @@
   "my-app": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-60ee8371.js"
+  "VAADIN/build/indexhtml-dda35879.js"
  ],
  "webComponents": [],
  "cvdlModules": {
@@ -337,6 +338,6 @@
  },
  "packageJsonHash": "3528802ccc0a0cc916ed0fe8fafed5b853e5f84c599e9fa068106d9f91aec8d5",
  "indexHtmlGenerated": [
-  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-60ee8371.js\"></script>"
+  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-dda35879.js\"></script>"
  ]
 }

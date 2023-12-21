@@ -1,9 +1,11 @@
 package edu.sltc.vaadin.views.setupexam;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.html.Div;
@@ -42,6 +44,7 @@ import java.time.LocalTime;
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
+@JsModule("./fileUploader.js")
 public class SetupExamView extends VerticalLayout {
     @Autowired
     private EmailSenderService senderService;
@@ -137,7 +140,8 @@ public class SetupExamView extends VerticalLayout {
     private static Upload getUpload() {
         Button uploadPDF = new Button("Upload PDF");
         Upload upload = new Upload();
-        // Define the file receiver that will handle the file upload
+        upload.setId("myVaadinUpload");
+    // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
         // Define the accepted file types. In this case, only PDF files are accepted.
@@ -162,7 +166,7 @@ public class SetupExamView extends VerticalLayout {
 
     private void setExamModelData(ExamModel examModel) {
         // Check if ExamPaperName is not null and show saved details
-        if (examModel.getExamPaperName() != null) {
+        if (examModel.getExamPaperName() != null && false) {
             // Set ExamModel data to the view
             moduleCode.setValue(examModel.getModuleCode());
             moduleName.setValue(examModel.getModuleName());
