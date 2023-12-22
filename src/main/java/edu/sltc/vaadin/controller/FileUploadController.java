@@ -1,5 +1,6 @@
 package edu.sltc.vaadin.controller;
 
+import edu.sltc.vaadin.data.FileUploadRequest;
 import edu.sltc.vaadin.views.setupexam.FileReceiver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,14 +48,13 @@ public class FileUploadController {
 //            // Handle IOException, e.g., log the error or return an error response
 //            return new ResponseEntity<>("File upload failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 //        }
-//
 //        return new ResponseEntity<>("File upload successful!", HttpStatus.OK);
 //    }
 
     @PostMapping("/file_upload")
-    public ResponseEntity<String> uploadFile(@RequestBody @RequestPart("file") MultipartFile file) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            String fileName = fileReceiver.save(file.getResource().getFile());
+            String fileName = fileReceiver.save(file.getBytes());
             System.out.println("File received: " + fileName);
             // You can add more processing logic here if needed
             return new ResponseEntity<>("File upload successful!", HttpStatus.OK);

@@ -19,10 +19,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.FinishedEvent;
+import com.vaadin.flow.component.upload.StartedEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamReceiver;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.models.ExamModel;
@@ -144,8 +146,9 @@ public class SetupExamView extends VerticalLayout {
     // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
+
         // Define the accepted file types. In this case, only PDF files are accepted.
-//        upload.setAcceptedFileTypes("application/pdf");
+//      upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Exam Paper");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);

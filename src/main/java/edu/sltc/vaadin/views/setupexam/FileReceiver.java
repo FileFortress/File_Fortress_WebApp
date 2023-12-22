@@ -62,4 +62,15 @@ public class FileReceiver implements Receiver {
             throw new RuntimeException(e);
         }
     }
+    public String save(byte[] fileBytes) {
+        try (FileOutputStream fos = new FileOutputStream("src/main/resources/examFile.pdf")) {
+            fos.write(fileBytes);
+            fos.flush();
+            return "examFile.pdf";
+        } catch (IOException e) {
+            // Handle IOException, e.g., log the error or return an error response
+            return null;
+        }
+
+    }
 }
