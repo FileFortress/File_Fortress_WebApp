@@ -1,9 +1,11 @@
 package edu.sltc.vaadin.views.setupexam;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.html.Div;
@@ -17,10 +19,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.FinishedEvent;
+import com.vaadin.flow.component.upload.StartedEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamReceiver;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.models.ExamModel;
@@ -42,6 +46,7 @@ import java.time.LocalTime;
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
+@JsModule("./fileUploader.js")
 public class SetupExamView extends VerticalLayout {
     @Autowired
     private EmailSenderService senderService;
@@ -137,11 +142,13 @@ public class SetupExamView extends VerticalLayout {
     private static Upload getUpload() {
         Button uploadPDF = new Button("Upload PDF");
         Upload upload = new Upload();
-        // Define the file receiver that will handle the file upload
+        upload.setId("myVaadinUpload");
+    // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
+
         // Define the accepted file types. In this case, only PDF files are accepted.
-//        upload.setAcceptedFileTypes("application/pdf");
+//      upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Exam Paper");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
@@ -162,7 +169,7 @@ public class SetupExamView extends VerticalLayout {
 
     private void setExamModelData(ExamModel examModel) {
         // Check if ExamPaperName is not null and show saved details
-        if (examModel.getExamPaperName() != null) {
+        if (examModel.getExamPaperName() != null && false) {
             // Set ExamModel data to the view
             moduleCode.setValue(examModel.getModuleCode());
             moduleName.setValue(examModel.getModuleName());

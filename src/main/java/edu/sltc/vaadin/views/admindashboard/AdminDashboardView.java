@@ -31,7 +31,7 @@ import java.util.TimerTask;
 @PageTitle("Admin Dashboard")
 @Route(value = "admin_dashboard", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
-@JsModule("adminDashboard.js")
+@JsModule("./adminDashboard.js")
 public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;
     private TextField WifiTextField, ServerUrlTextField, JoinedStudentsTextField, submissionCountTextField;
