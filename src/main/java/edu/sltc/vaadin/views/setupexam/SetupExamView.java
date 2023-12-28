@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
@@ -22,6 +23,7 @@ import com.vaadin.flow.component.upload.FinishedEvent;
 import com.vaadin.flow.component.upload.StartedEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamReceiver;
@@ -46,7 +48,9 @@ import java.time.LocalTime;
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
-@JsModule("./fileUploader.js")
+//@JsModule("./fileUploader.js")
+//load jquery
+@JavaScript("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
 public class SetupExamView extends VerticalLayout {
     @Autowired
     private EmailSenderService senderService;
@@ -57,6 +61,37 @@ public class SetupExamView extends VerticalLayout {
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
+
+    // Modified JavaScript code
+    String jsCode = "$('#myVaadinButton').on('click', function(){" +
+            "  console.log('JavaScript code started executing'); " + // Add console log
+            "  var fileInput = document.getElementById('fileInput');" +
+            "  var file = fileInput.files[0];" +
+            "  if (file) {" +
+            "    var formData = new FormData();" +
+            "    formData.append('file', file);" +
+            "    var xhr = new XMLHttpRequest();" +
+            "    var targetUrl = $('#myVaadinUpload').attr('target');" +
+            "    console.error('Target URL: ' + targetUrl);" + // Use console.error
+            "    xhr.open('POST', 'http://localhost:4444/' + targetUrl, true);" + // Concatenate URL
+            "    xhr.onreadystatechange = function() {" +
+            "      if (xhr.readyState === 4) {" +
+            "        if (xhr.status === 200) {" +
+            "          alert('File uploaded successfully');" +
+            "        } else {" +
+            "          alert('Error uploading file:', xhr.statusText);" +
+            "        }" +
+            "      }" +
+            "    };" +
+            "    xhr.send(formData);" +
+            "  } else {" +
+            "    alert('No file selected.');" +
+            "  }" +
+            "});";
+    /* Things I debugged already:
+    *    [-] set url as "http://localhost:4444/fortress/file_upload and changed uploadElement.setAttribute("target", "http://localhost:4444/file_upload") to api path;
+    *    [-] get path from var targetUrl = $('#myVaadinUpload').attr('target');" and concat with http://localhost:4444/ to check file upload using client side"
+    * */
 
     public SetupExamView() {
         setSpacing(false);
@@ -137,29 +172,76 @@ public class SetupExamView extends VerticalLayout {
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
-    }
+
+        // Execute JavaScript code when the view is attached to the UI
+
+        // Execute JavaScript code when the view is attached to the UI
+        //UI.getCurrent().getPage().executeJs(jsCode);
+        UI.getCurrent().getPage().executeJs(
+                "$(document).ready(function(){" +
+                        "  $('#myVaadinButton').on('click', function(){" +
+                        "    console.log('JavaScript code started executing');" +
+                        "    var fileInput = document.getElementById('fileInput');" +
+                        "    var file = fileInput.files[0];" +
+                        "    if (file) {" +
+                        "      var formData = new FormData();" +
+                        "      formData.append('file', file);" +
+                        "      var xhr = new XMLHttpRequest();" +
+                        "      var targetUrl = $('#myVaadinUpload').attr('target');" +
+                        "      console.error('Target URL: ' + targetUrl);" +
+                        "      xhr.open('POST', 'http://localhost:4444/' + targetUrl, true);" +
+                        "      xhr.onreadystatechange = function() {" +
+                        "        if (xhr.readyState === 4) {" +
+                        "          if (xhr.status === 200) {" +
+                        "            alert('File uploaded successfully');" +
+                        "          } else {" +
+                        "            alert('Error uploading file:', xhr.statusText);" +
+                        "          }" +
+                        "        }" +
+                        "      };" +
+                        "      xhr.send(formData);" +
+                        "    } else {" +
+                        "      alert('No file selected.');" +
+                        "    }" +
+                        "  });" +
+                        "});"
+            );
+
+        }
+
+
+//         addAttachListener(attachEvent -> UI.getCurrent().getPage().executeJs(jsCode));
+
 
     private static Upload getUpload() {
         Button uploadPDF = new Button("Upload PDF");
+        //custom set element ids
+        uploadPDF.setId("myVaadinButton");
         Upload upload = new Upload();
         upload.setId("myVaadinUpload");
-    // Define the file receiver that will handle the file upload
+        // Access the underlying HTML element of the Upload component
+//        Element uploadElement = upload.getElement();
+//
+//        // Set the 'target', 'headers', and 'form-data-name' attributes
+//        uploadElement.setAttribute("target", "http://localhost:4444/file_upload");
+//        uploadElement.setAttribute("headers", "{\"Content-Type\": \"multipart/form-data\"}");
+//        uploadElement.setAttribute("form-data-name", "file");
+
+        // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
 
         // Define the accepted file types. In this case, only PDF files are accepted.
-//      upload.setAcceptedFileTypes("application/pdf");
+        upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Exam Paper");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addFinishedListener(event -> {
-            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             ExamModel.getInstance().setExamPaperName(event.getFileName());
-            Notification notification = Notification
-                    .show(event.getFileName()+" File uploaded successfully!");
+            Notification notification = Notification.show(event.getFileName()+" File uploaded successfully!");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             notification.setPosition(Notification.Position.BOTTOM_END);
             notification.setDuration(2500);
@@ -184,7 +266,6 @@ public class SetupExamView extends VerticalLayout {
         }
     }
 
-
     private void startServer() {
         // Implement your server start logic here
         // Obtain user input data
@@ -207,9 +288,6 @@ public class SetupExamView extends VerticalLayout {
         System.out.println(examModel);
         // Display success message or navigate to the student dashboard
         Notification.show("Exam details saved successfully!");
-//        UI.getCurrent().navigate(AdminDashboardView.class);
-//        InMemoryUserDetailsManager userDetailsManager = VaadinSession.getCurrent().getBean(InMemoryUserDetailsManager.class);
-
 
         //give access to students and have to add user to InMemoryUserDetailsManager
         String defaultPassword = "harindu123";
@@ -219,5 +297,4 @@ public class SetupExamView extends VerticalLayout {
                 .roles("USER")
                 .build());
     }
-
 }
