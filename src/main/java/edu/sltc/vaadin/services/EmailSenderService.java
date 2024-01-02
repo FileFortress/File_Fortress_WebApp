@@ -19,32 +19,30 @@ import java.util.Set;
  */
 @Service
 public class EmailSenderService {
+    @Autowired
+    private JavaMailSender javaMailSender;
 
+    public void sendEmail(String toEmail, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(body);
+        javaMailSender.send(message);
+        System.out.println("Mail Sending Successful!!");
+    }
 
-        @Autowired
-        private JavaMailSender javaMailSender;
-
-        public void sendEmail(String toEmail, String subject, String body) {
+    public void sendBulkEmails(List<String> toEmails, String subject, Set<String> body) {
+        int i = 0;
+        ArrayList<String> passwordList = new ArrayList<>(body);
+        for (String toEmail : toEmails) {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
             message.setSubject(subject);
-            message.setText(body);
+            message.setText(passwordList.get(i++));
             javaMailSender.send(message);
-            System.out.println("Mail Sending Successful!!");
         }
-
-        public void sendBulkEmails(List<String> toEmails, String subject, Set<String> body) {
-            int i = 0;
-            ArrayList<String> passwordList = new ArrayList<>(body);
-            for (String toEmail : toEmails) {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setTo(toEmail);
-                message.setSubject(subject);
-                message.setText(passwordList.get(i++));
-                javaMailSender.send(message);
-            }
-            System.out.println("Mails Sending Successful!!");
-        }
+        System.out.println("Mails Sending Successful!!");
+    }
 
 
 }

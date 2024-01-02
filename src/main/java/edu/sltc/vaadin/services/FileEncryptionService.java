@@ -26,6 +26,7 @@ public class FileEncryptionService {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             try (CipherOutputStream cipherOutputStream = new CipherOutputStream(fileOutputStream, cipher)) {
+                System.out.println("Encrypted File Received!!");
                 byte[] buffer = new byte[1024];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) >= 0) {
@@ -37,7 +38,13 @@ public class FileEncryptionService {
         }
     }
     public static void decryptFile(){
-
+        Key secretKey = new SecretKeySpec(SECRET_KEY.getEncoded(), ALGORITHM);
+        try {
+            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

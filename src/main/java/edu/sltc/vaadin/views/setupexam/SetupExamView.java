@@ -21,6 +21,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.FinishedEvent;
 import com.vaadin.flow.component.upload.StartedEvent;
+import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.dom.Element;
@@ -48,7 +49,7 @@ import java.time.LocalTime;
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
-//@JsModule("./fileUploader.js")
+@JsModule("./fileUploader.js")
 //load jquery
 @JavaScript("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
 public class SetupExamView extends VerticalLayout {
@@ -174,44 +175,9 @@ public class SetupExamView extends VerticalLayout {
         getStyle().set("text-align", "center");
 
         // Execute JavaScript code when the view is attached to the UI
-
-        // Execute JavaScript code when the view is attached to the UI
+        UI.getCurrent().getPage().executeJs("uploadFile();");
         //UI.getCurrent().getPage().executeJs(jsCode);
-        UI.getCurrent().getPage().executeJs(
-                "$(document).ready(function(){" +
-                        "  $('#myVaadinButton').on('click', function(){" +
-                        "    console.log('JavaScript code started executing');" +
-                        "    var fileInput = document.getElementById('fileInput');" +
-                        "    var file = fileInput.files[0];" +
-                        "    if (file) {" +
-                        "      var formData = new FormData();" +
-                        "      formData.append('file', file);" +
-                        "      var xhr = new XMLHttpRequest();" +
-                        "      var targetUrl = $('#myVaadinUpload').attr('target');" +
-                        "      console.error('Target URL: ' + targetUrl);" +
-                        "      xhr.open('POST', 'http://localhost:4444/' + targetUrl, true);" +
-                        "      xhr.onreadystatechange = function() {" +
-                        "        if (xhr.readyState === 4) {" +
-                        "          if (xhr.status === 200) {" +
-                        "            alert('File uploaded successfully');" +
-                        "          } else {" +
-                        "            alert('Error uploading file:', xhr.statusText);" +
-                        "          }" +
-                        "        }" +
-                        "      };" +
-                        "      xhr.send(formData);" +
-                        "    } else {" +
-                        "      alert('No file selected.');" +
-                        "    }" +
-                        "  });" +
-                        "});"
-            );
-
         }
-
-
-//         addAttachListener(attachEvent -> UI.getCurrent().getPage().executeJs(jsCode));
-
 
     private static Upload getUpload() {
         Button uploadPDF = new Button("Upload PDF");
@@ -220,13 +186,6 @@ public class SetupExamView extends VerticalLayout {
         Upload upload = new Upload();
         upload.setId("myVaadinUpload");
         // Access the underlying HTML element of the Upload component
-//        Element uploadElement = upload.getElement();
-//
-//        // Set the 'target', 'headers', and 'form-data-name' attributes
-//        uploadElement.setAttribute("target", "http://localhost:4444/file_upload");
-//        uploadElement.setAttribute("headers", "{\"Content-Type\": \"multipart/form-data\"}");
-//        uploadElement.setAttribute("form-data-name", "file");
-
         // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
@@ -237,7 +196,8 @@ public class SetupExamView extends VerticalLayout {
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
-        upload.addFinishedListener(event -> {
+        upload.addSucceededListener(event -> {
+            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             ExamModel.getInstance().setExamPaperName(event.getFileName());
