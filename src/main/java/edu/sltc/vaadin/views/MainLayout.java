@@ -40,6 +40,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -175,8 +176,11 @@ public class MainLayout extends AppLayout {
         }
     }
     private void sendServerPublicKeyToUser(GrantedAuthority grantedAuthority) {
-        UI.getCurrent().getPage().executeJs("getServerPublic($0);", Base64.getEncoder().encodeToString(GenerateKeyPair.getInstanceKeyPair().getPublic().getEncoded()));
+        byte[] publicKeyBytes = GenerateKeyPair.getInstanceKeyPair().getPublic().getEncoded();
+        String base64EncodedPublicKey = Base64.getEncoder().encodeToString(publicKeyBytes);
+        UI.getCurrent().getPage().executeJs("getServerPublic($0);", base64EncodedPublicKey);
         System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
+        System.out.println("Server Public encoded : " + base64EncodedPublicKey);
         if ("ADMIN".equals(grantedAuthority.getAuthority())) {
             UI.getCurrent().navigate(AdminDashboardView.class);
             UI.getCurrent().getPage().executeJs("ns.getServerPublic($0)", GenerateKeyPair.getInstanceKeyPair().getPublic());
