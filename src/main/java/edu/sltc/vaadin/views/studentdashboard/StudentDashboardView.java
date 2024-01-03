@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -61,17 +62,35 @@ public class StudentDashboardView extends VerticalLayout {
             formLayout.setMaxWidth("600px");
             moduleDetails.add(formLayout);
 
-            /*
-             * start time
-             */
-            Span start_time = new Span("Start Time : " + examModel.getStartTime());
-            formLayout.add(start_time);
+//            /*
+//             * start time
+//             */
+//            Span start_time = new Span("Start Time : " + examModel.getStartTime());
+//            formLayout.add(start_time);
+//
+//            /*
+//             * end time
+//             */
+//            Span end_time = new Span("End Time : " + examModel.getEndTime());
+//            formLayout.add(end_time);
+            // Inline "Start Time" and "End Time" components
+            HorizontalLayout timeLayout = new HorizontalLayout();
+            timeLayout.setAlignItems(Alignment.CENTER); // Align items vertically
+            timeLayout.setWidthFull(); //set full width of component
 
-            /*
-             * end time
-             */
-            Span end_time = new Span("End Time : " + examModel.getEndTime());
-            formLayout.add(end_time);
+            // Start time
+            Span start_time = new Span("Start Time: " + examModel.getStartTime());
+            timeLayout.add(start_time);
+
+            // Spacer
+            timeLayout.add(new HorizontalLayout(new Span(" "))); // Add a spacer
+
+            // End time
+            Span end_time = new Span("End Time: " + examModel.getEndTime());
+            timeLayout.add(end_time);
+
+            // Add the time layout to the form layout
+            formLayout.add(timeLayout);
 
             /*
              * Timer
