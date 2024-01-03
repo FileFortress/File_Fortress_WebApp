@@ -247,6 +247,8 @@
   "@vaadin/virtual-list/theme/lumo/vaadin-virtual-list.js",
   "Frontend//styles/login-view.css",
   "Frontend/adminDashboard.js",
+  "Frontend/clientKeyExchange.js",
+  "Frontend/fileUploader.js",
   "Frontend/generated/jar-resources/buttonFunctions.js",
   "Frontend/generated/jar-resources/comboBoxConnector.js",
   "Frontend/generated/jar-resources/contextMenuConnector.js",
@@ -275,7 +277,9 @@
   "themes/my-app/components/vaadin-button.css": "fb360cc9c7c5892b8c5b186c0b057b22f61c20d55854706f4320938cd5dc0e01",
   "styles/login-view.css": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "simple-timer.js": "9e132736a445a91efa952640fb7e1aebf1af34de044e0287c4a288f06a32b240",
+  "clientKeyExchange.js": "c39c0d5d31ea1dfdd1d8bd86f8835fbaf94455516e9693a59e1c2d9d2b05feec",
   "loginView.js": "8eecbbb1051220f3f7846b4565a6af8d78c2edadc1137d294676c29acb1291df",
+  "fileUploader.js": "902eab5fac4a343af4f25c613c21cb81de4899471a1bc1e8588c7684e22cadd0",
   "buttonFunctions.js": "c852123f9b2c44eb75e555119d3e05a7dbe78b91d0ab616feb9df1654474707d",
   "comboBoxConnector.js": "1d004c3dae9c76f8bcc68678abe1b8f7bdc8b456f5c9c4c7f190df8ed25d66cd",
   "contextMenuConnector.js": "8960e00884b9a8b62e24be63e03fe7045dcb9b6844a8a238eb4619d5595e2cfc",
@@ -302,7 +306,7 @@
   "my-app": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-dda35879.js"
+  "VAADIN/build/indexhtml-858bc1d7.js"
  ],
  "webComponents": [],
  "cvdlModules": {
@@ -337,6 +341,6 @@
  },
  "packageJsonHash": "3528802ccc0a0cc916ed0fe8fafed5b853e5f84c599e9fa068106d9f91aec8d5",
  "indexHtmlGenerated": [
-  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-dda35879.js\"></script>"
+  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-858bc1d7.js\"></script>"
  ]
 }
