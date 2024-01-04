@@ -71,7 +71,6 @@ public class AdminDashboardView extends VerticalLayout {
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("350px", 2));
 
-
         add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -99,7 +98,6 @@ public class AdminDashboardView extends VerticalLayout {
                         ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
                     }
                 });
-
             }
         },0,5000);
 

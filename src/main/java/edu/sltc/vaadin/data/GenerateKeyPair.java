@@ -1,5 +1,6 @@
 package edu.sltc.vaadin.data;
 
+import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
@@ -45,9 +46,7 @@ public class GenerateKeyPair {
             // secp256r1 [NIST P-256, X9.62 prime256v1]
             // secp384r1 [NIST P-384]
             // secp521r1 [NIST P-521]
-            for (Provider provider : Security.getProviders()) {
-                System.out.println("Provider: " + provider.getName() + " version: " + provider.getVersionStr());
-            }
+
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC", "SunEC");
             ECGenParameterSpec ecParameterSpec = new ECGenParameterSpec(ecdhCurvenameString);
             keyPairGenerator.initialize(ecParameterSpec);
@@ -66,6 +65,34 @@ public class GenerateKeyPair {
     }
     public static KeyPair getInstanceKeyPair() {
         return keyPair;
+    }
+    public static String generateSharedSecret(PublicKey clientPublicKey) {
+        String sharedSecret = "";
+        try {
+            // Create KeyAgreement instance using the Diffie-Hellman algorithm
+            KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
+
+            // Initialize with the server's private key
+            keyAgreement.init(keyPair.getPrivate());
+
+            // Generate the shared secret
+            keyAgreement.doPhase(clientPublicKey, true);
+            byte[] sharedSecretBytes = keyAgreement.generateSecret();
+
+            // Convert the shared secret to a base64-encoded string
+            sharedSecret = Base64.getEncoder().encodeToString(sharedSecretBytes);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            // Handle exceptions
+            e.printStackTrace();
+        }
+        return sharedSecret;
+    }
+
+
+    public static void main(String[] args) {
+        for (Provider provider : Security.getProviders()) {
+            System.out.println("Provider: " + provider.getName() + " version: " + provider.getVersionStr());
+        }
     }
 }
 
