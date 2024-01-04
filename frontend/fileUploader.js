@@ -6,6 +6,7 @@ window.uploadFile = function uploadFile(){
 
     // Assume you have received the base64-encoded server public key from the server
     const serverPublicKeyBase64 = sessionStorage.getItem('serverPublic'); // Replace with the actual value
+    const fileUploader = Object.create(window.key); // create object
 
 // Decode the base64-encoded server public key
     const serverPublicKeyArrayBuffer = Uint8Array.from(atob(serverPublicKeyBase64), c => c.charCodeAt(0));
@@ -29,7 +30,7 @@ window.uploadFile = function uploadFile(){
                 const clientPublicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKeyArrayBuffer)));
                 console.log("Client Public Key (base64):", clientPublicKeyBase64);
                 // Send clientPublicKeyBase64 to the server (if required)
-                window.mainView.setClientPublicKey(clientPublicKeyBase64);
+                fileUploader.sendClientPublic(clientPublicKeyBase64);
             })
             .catch(error => console.error('Error exporting public key:', error));
     }).catch(error => {
