@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -23,6 +24,7 @@ import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.data.PublicKeyHolder;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
@@ -50,6 +52,7 @@ import java.util.Collection;
  */
 
 @JsModule("./clientKeyExchange.js")
+@JsModule("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
 public class MainLayout extends AppLayout {
     private static final String LOGOUT_SUCCESS_URL = "/login";
     private H2 viewTitle;
@@ -67,6 +70,7 @@ public class MainLayout extends AppLayout {
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
+        UI.getCurrent().getPage().executeJs("key.init($0);",this);
         sendServerPublicKeyToUser(authentication.getAuthorities().stream().toList().get(0));
     }
     private void addHeaderContent() {
@@ -193,4 +197,12 @@ public class MainLayout extends AppLayout {
             System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
         }
     }
+
+    @ClientCallable
+    public void setClientPublicKey(String publicKey){
+        User user = (User) authentication.getPrincipal();
+        PublicKeyHolder.getInstance().put(user.getUsername(), publicKey);
+        System.out.println("Client Public : "+publicKey);
+    }
+
 }
