@@ -1,9 +1,5 @@
 package edu.sltc.vaadin.views;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.UI;
@@ -19,33 +15,24 @@ import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
-import edu.sltc.vaadin.data.PublicKeyHolder;
+import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import edu.sltc.vaadin.views.setupexam.SetupExamView;
 import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
-import java.nio.file.attribute.UserPrincipal;
-import java.security.Principal;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -200,9 +187,14 @@ public class MainLayout extends AppLayout {
 
     @ClientCallable
     public void setClientPublicKey(String publicKey){
-        User user = (User) authentication.getPrincipal();
-        PublicKeyHolder.getInstance().put(user.getUsername(), publicKey);
-        System.out.println("Client Public : "+publicKey);
+        if (authentication.getPrincipal() instanceof User user) {
+            PublicKeyHolder.getInstance().put(user.getUsername(), publicKey);
+            System.out.println("Client Public : "+publicKey);
+        }
+        System.out.println(PublicKeyHolder.getInstance());
+        if (PublicKeyHolder.getInstance().containsKey("nuyunpabasara457@gmail.com")){
+            System.out.println(GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get("nuyunpabasara457@gmail.com")));
+        }
     }
 
 }
