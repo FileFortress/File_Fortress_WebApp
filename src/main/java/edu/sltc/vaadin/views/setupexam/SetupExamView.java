@@ -181,14 +181,12 @@ public class SetupExamView extends VerticalLayout {
 
     private static Upload getUpload() {
         Button uploadPDF = new Button("Upload PDF");
-        //custom set element ids
-        uploadPDF.setId("myVaadinButton");
         Upload upload = new Upload();
         upload.setId("myVaadinUpload");
         // Access the underlying HTML element of the Upload component
         // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
-        upload.setReceiver(memoryBuffer);
+        upload.setReceiver(new FileReceiver());
 
         // Define the accepted file types. In this case, only PDF files are accepted.
         upload.setAcceptedFileTypes("application/pdf");
@@ -197,7 +195,7 @@ public class SetupExamView extends VerticalLayout {
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addSucceededListener(event -> {
-            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
+//            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             ExamModel.getInstance().setExamPaperName(event.getFileName());
