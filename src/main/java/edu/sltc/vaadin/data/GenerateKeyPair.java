@@ -4,6 +4,7 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -17,6 +18,7 @@ import java.util.Base64;
  */
 public class GenerateKeyPair {
     private static KeyPair keyPair;
+    private static String base64EncodedPublicKey;
     private static final GenerateKeyPair instance = new GenerateKeyPair();
     //    private GenerateKeyPair() {
 //        // Private constructor to prevent instantiation
@@ -52,20 +54,38 @@ public class GenerateKeyPair {
             keyPairGenerator.initialize(ecParameterSpec);
             KeyPair ecdhKeyPair = keyPairGenerator.genKeyPair();
             keyPair = ecdhKeyPair;
-            PrivateKey privateKey = ecdhKeyPair.getPrivate();
-            PublicKey publicKey = ecdhKeyPair.getPublic();
-            System.out.println("privateKey: " + privateKey);
-            System.out.println("publicKey: " + publicKey);
+            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(keyPair.getPublic().getEncoded());
+            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+            byte[] rawPublicKey = publicKey.getEncoded();
+            base64EncodedPublicKey = Base64.getEncoder().encodeToString(rawPublicKey);
 
+            PrivateKey privateKey = ecdhKeyPair.getPrivate();
+            PublicKey publicKeyOld = ecdhKeyPair.getPublic();
+            System.out.println("privateKey: " + privateKey);
+            System.out.println("publicKey Old: " + publicKeyOld);
+            System.out.println("publicKey: " + publicKey);
+            System.out.println("Encoded String: " + base64EncodedPublicKey);
+            byte[] publicKeyBytes = publicKeyOld.getEncoded();
+            String base64EncodedPublicKey1 = Base64.getEncoder().encodeToString(publicKeyBytes);
+            System.out.println("Encoded StringOld: " + base64EncodedPublicKey1);
+            byte[] publicKeyBytes1 = Base64.getDecoder().decode(base64EncodedPublicKey);
+            // Create an X509EncodedKeySpec from the decoded bytes
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes1);
+            // Get the public key from the key specification
+            System.out.println(keyFactory.generatePublic(keySpec));
         } catch (InvalidAlgorithmParameterException | NoSuchProviderException | NoSuchAlgorithmException e) {
             // Print the stack trace for debugging purposes
             e.printStackTrace();
             throw new RuntimeException("Error generating key pair", e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
         }
     }
     public static KeyPair getInstanceKeyPair() {
         return keyPair;
     }
+    public static String getBase64EncodedPublicKey(){return base64EncodedPublicKey;}
     public static String generateSharedSecret(PublicKey clientPublicKey) {
         String sharedSecret = "";
         try {
