@@ -3,7 +3,6 @@ package edu.sltc.vaadin.security;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import edu.sltc.vaadin.data.PasswordGenerator;
 import edu.sltc.vaadin.models.PasswordPool;
-import edu.sltc.vaadin.services.EmailExtractor;
 import edu.sltc.vaadin.views.login.LoginView;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,8 +67,8 @@ public class SecurityConfiguration extends VaadinWebSecurity {
      PasswordPool.getInstance().setAdminPasswords(PasswordGenerator.bulkPasswordForExaminers(2));
         return new InMemoryUserDetailsManager(
                 User.withUsername("nuyunpabasara457@gmail.com").password(passwordEncoder().encode("nuyun123")).roles("ADMIN").build(),
-                User.withUsername(EmailExtractor.emails.get(0)).password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build(),
-                User.withUsername(EmailExtractor.emails.get(1)).password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(1))).roles("ADMIN").build()
+                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build(),
+                User.withUsername("eviefyre4k@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(1))).roles("ADMIN").build()
         );
     }
 

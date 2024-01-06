@@ -31,8 +31,8 @@ import java.util.List;
 @Theme(value = "my-app", variant = Lumo.DARK)
 @PropertySource("classpath:application.properties")
 public class Application implements AppShellConfigurator {
-    @Autowired
-    private EmailSenderService senderService;
+//    @Autowired
+//    private EmailSenderService senderService;
     public static void main(String[] args) {
 //      SpringApplication.run(Application.class, args);
         SpringApplication application = new SpringApplication(Application.class);
@@ -43,6 +43,6 @@ public class Application implements AppShellConfigurator {
 
     @EventListener(ApplicationReadyEvent.class)
     public void sendEmailsToAdmins(){
-        senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service", PasswordPool.getInstance().getAdminPasswords());
+//        senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service", PasswordPool.getInstance().getAdminPasswords());
     }
 }
