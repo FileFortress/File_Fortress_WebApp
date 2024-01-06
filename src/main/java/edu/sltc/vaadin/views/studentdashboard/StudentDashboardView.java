@@ -121,7 +121,7 @@ public class StudentDashboardView extends VerticalLayout {
             Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
             add(Late_submission);
             formLayout.setColspan(Late_submission, 2);
-            Button downloadBtn = new Button("Download Exam Paper");
+            Button downloadBtn = new Button("Download Paper");
             add(downloadBtn);
         } else {
             H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
