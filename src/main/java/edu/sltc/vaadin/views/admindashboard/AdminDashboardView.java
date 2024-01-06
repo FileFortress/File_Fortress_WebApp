@@ -38,10 +38,24 @@ public class AdminDashboardView extends VerticalLayout {
     private UI ui;
     private Timer timer;
     public AdminDashboardView() {
-        setSpacing(false);
+        FormLayout formLayoutOne = new FormLayout();
+        add(formLayoutOne);
         H2 remainingTime = new H2("Remaining Time");
-        add(remainingTime);
-        add(createTimerLayout());
+        H2 otpViewer = new H2("Current OTP");
+//        layout.add(remainingTime);
+        formLayoutOne.add(remainingTime);
+        formLayoutOne.setColspan(remainingTime, 2);
+        formLayoutOne.add(otpViewer);
+        formLayoutOne.setColspan(otpViewer, 2);
+        Div timer1 = createTimerLayout();
+        formLayoutOne.add(timer1);
+        formLayoutOne.setColspan(timer1, 2);
+//        layout.add(otpViewer);
+        Div otp1 = otpViewer();
+        formLayoutOne.add(otp1);
+        formLayoutOne.setColspan(otp1, 1);
+        formLayoutOne.setResponsiveSteps(new FormLayout.ResponsiveStep("0px", 4));
+        setSpacing(false);
 
         Div moduleDetails = new Div();
         moduleDetails.setMaxWidth("800px");
@@ -82,27 +96,49 @@ public class AdminDashboardView extends VerticalLayout {
         submissionCountTextField.setValue("10");
         ui = UI.getCurrent();
         Timer wifiTimer = new Timer(true);
-        wifiTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                ui.access(new Command() {
-                    @Override
-                    public void execute() {
-                        WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-                        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
-                        // Set push mode to MANUAL to enable background updates
-                        ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
-                        // Push an empty update to trigger a background refresh
-                        ui.push();
-                        // Set push mode back to AUTOMATIC (optional)
-                        ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
-                    }
-                });
-            }
-        },0,5000);
+//        wifiTimer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                ui.access(new Command() {
+//                    @Override
+//                    public void execute() {
+//                        WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
+//                        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
+//                        // Set push mode to MANUAL to enable background updates
+//                        ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
+//                        // Push an empty update to trigger a background refresh
+//                        ui.push();
+//                        // Set push mode back to AUTOMATIC (optional)
+//                        ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
+//                    }
+//                });
+//            }
+//        },0,5000);
 
     }
-    private Div createTimerLayout() {
+    //    private Div createTimerLayout() {
+//        Div layout = new Div();
+//        layout.getStyle().set("font-size", "30px");
+//        layout.getStyle().set("color", "#333");
+//        layout.getStyle().set("margin-top", "10px");
+//        layout.getStyle().set("margin-bottom", "20px");
+//        layout.getStyle().set("padding-left", "55px");
+//        layout.getStyle().set("padding-right", "55px");
+//        layout.getStyle().set("padding-top", "25px");
+//        layout.getStyle().set("padding-bottom", "25px");
+//        layout.getStyle().set("border", "5px solid white");
+//        layout.getStyle().set("border-radius", "25px");
+//        SimpleTimer timer = getRemainingTimerLayout();
+//        timer.getStyle().setColor("white");
+//        timer.setFractions(false);
+//        timer.setHours(true);
+//        timer.setMinutes(true);
+//        timer.setCountUp(false);
+//        timer.start();
+//        layout.add(timer);
+//        return layout;
+//    }
+    private Div firsrDivFlexbox(){
         Div layout = new Div();
         layout.getStyle().set("font-size", "30px");
         layout.getStyle().set("color", "#333");
@@ -114,6 +150,11 @@ public class AdminDashboardView extends VerticalLayout {
         layout.getStyle().set("padding-bottom", "25px");
         layout.getStyle().set("border", "5px solid white");
         layout.getStyle().set("border-radius", "25px");
+        return layout;
+    }
+
+    private Div createTimerLayout() {
+        Div layout = firsrDivFlexbox();
         SimpleTimer timer = getRemainingTimerLayout();
         timer.getStyle().setColor("white");
         timer.setFractions(false);
@@ -124,7 +165,10 @@ public class AdminDashboardView extends VerticalLayout {
         layout.add(timer);
         return layout;
     }
-
+    private Div otpViewer(){
+        Div layout =firsrDivFlexbox();
+        return layout ;
+    }
     private SimpleTimer getRemainingTimerLayout() {
         // Calculate the remaining time and return it as a string
 //        // Define the target date and time
