@@ -32,9 +32,6 @@ window.uploadFile = function uploadFile(){
                 console.error('Error encrypting file:', error);
             });
     });
-    //     formData.append('file', event.detail.file, event.detail.file.name);
-    //     event.detail.xhr.send(formData);
-    // });
 }
 function encryptFile(file, key) {
     return new Promise((resolve, reject) => {
@@ -46,7 +43,7 @@ function encryptFile(file, key) {
             const sharedKeyBuffer = Uint8Array.from(atob(key), c => c.charCodeAt(0));
             crypto.subtle.importKey('raw', sharedKeyBuffer, { name: 'AES-GCM' }, false, ['encrypt'])
                 .then(cryptoKey => {
-                    crypto.subtle.encrypt({ name: 'AES-GCM', iv: new Uint8Array(12) }, cryptoKey, arrayBuffer);
+                    return crypto.subtle.encrypt({ name: 'AES-GCM', iv: new Uint8Array(12) }, cryptoKey, arrayBuffer);
                 })
                 .then(encryptedArrayBuffer => resolve(encryptedArrayBuffer))
                 .catch(reject);

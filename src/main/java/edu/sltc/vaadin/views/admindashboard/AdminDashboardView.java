@@ -89,7 +89,7 @@ public class AdminDashboardView extends VerticalLayout {
                     @Override
                     public void execute() {
                         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-                        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":80" );
+                        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
                         // Set push mode to MANUAL to enable background updates
                         ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
                         // Push an empty update to trigger a background refresh
