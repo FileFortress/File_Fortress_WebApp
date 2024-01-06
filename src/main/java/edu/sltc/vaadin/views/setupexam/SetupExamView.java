@@ -30,7 +30,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamReceiver;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
+import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.services.EmailSenderService;
 import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.views.MainLayout;
@@ -40,6 +42,7 @@ import edu.sltc.vaadin.views.studentdashboard.StudentDashboardView;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -62,37 +65,6 @@ public class SetupExamView extends VerticalLayout {
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
-
-    // Modified JavaScript code
-    String jsCode = "$('#myVaadinButton').on('click', function(){" +
-            "  console.log('JavaScript code started executing'); " + // Add console log
-            "  var fileInput = document.getElementById('fileInput');" +
-            "  var file = fileInput.files[0];" +
-            "  if (file) {" +
-            "    var formData = new FormData();" +
-            "    formData.append('file', file);" +
-            "    var xhr = new XMLHttpRequest();" +
-            "    var targetUrl = $('#myVaadinUpload').attr('target');" +
-            "    console.error('Target URL: ' + targetUrl);" + // Use console.error
-            "    xhr.open('POST', 'http://localhost:4444/' + targetUrl, true);" + // Concatenate URL
-            "    xhr.onreadystatechange = function() {" +
-            "      if (xhr.readyState === 4) {" +
-            "        if (xhr.status === 200) {" +
-            "          alert('File uploaded successfully');" +
-            "        } else {" +
-            "          alert('Error uploading file:', xhr.statusText);" +
-            "        }" +
-            "      }" +
-            "    };" +
-            "    xhr.send(formData);" +
-            "  } else {" +
-            "    alert('No file selected.');" +
-            "  }" +
-            "});";
-    /* Things I debugged already:
-    *    [-] set url as "http://localhost:4444/fortress/file_upload and changed uploadElement.setAttribute("target", "http://localhost:4444/file_upload") to api path;
-    *    [-] get path from var targetUrl = $('#myVaadinUpload').attr('target');" and concat with http://localhost:4444/ to check file upload using client side"
-    * */
 
     public SetupExamView() {
         setSpacing(false);
@@ -186,7 +158,7 @@ public class SetupExamView extends VerticalLayout {
         // Access the underlying HTML element of the Upload component
         // Define the file receiver that will handle the file upload
         MemoryBuffer memoryBuffer = new MemoryBuffer();
-        upload.setReceiver(new FileReceiver());
+        upload.setReceiver(memoryBuffer);
 
         // Define the accepted file types. In this case, only PDF files are accepted.
         upload.setAcceptedFileTypes("application/pdf");
@@ -196,6 +168,9 @@ public class SetupExamView extends VerticalLayout {
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addSucceededListener(event -> {
 //            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
+            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile_"+user.getUsername()+".pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+            }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             ExamModel.getInstance().setExamPaperName(event.getFileName());
