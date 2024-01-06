@@ -38,7 +38,8 @@ import java.util.Base64;
  * The main view is a top-level placeholder for other views.
  */
 
-@JsModule("./clientKeyExchange.js")
+//@JsModule("./clientKeyExchange.js")
+    @JsModule("./test.js")
 @JsModule("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
 public class MainLayout extends AppLayout {
     private static final String LOGOUT_SUCCESS_URL = "/login";
@@ -167,11 +168,8 @@ public class MainLayout extends AppLayout {
         }
     }
     private void sendServerPublicKeyToUser(GrantedAuthority grantedAuthority) {
-        byte[] publicKeyBytes = GenerateKeyPair.getInstanceKeyPair().getPublic().getEncoded();
-        String base64EncodedPublicKey = Base64.getEncoder().encodeToString(publicKeyBytes);
-        UI.getCurrent().getPage().executeJs("getServerPublic($0);", base64EncodedPublicKey);
+        UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
         System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
-        System.out.println("Server Public encoded : " + base64EncodedPublicKey);
         if ("ADMIN".equals(grantedAuthority.getAuthority())) {
             UI.getCurrent().navigate(AdminDashboardView.class);
             UI.getCurrent().getPage().executeJs("ns.getServerPublic($0)", GenerateKeyPair.getInstanceKeyPair().getPublic());

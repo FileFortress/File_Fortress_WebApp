@@ -1,9 +1,12 @@
 package edu.sltc.vaadin.data;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -17,27 +20,9 @@ import java.util.Base64;
  */
 public class GenerateKeyPair {
     private static KeyPair keyPair;
+    private static String base64EncodedPublicKey;
+    private static KeyFactory keyFactory;
     private static final GenerateKeyPair instance = new GenerateKeyPair();
-    //    private GenerateKeyPair() {
-//        // Private constructor to prevent instantiation
-//        try {
-//            // Create a Diffie-Hellman key pair generator
-//            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DiffieHellman");
-//            // Generate the Diffie-Hellman parameters (you may need to adjust the key size)
-//            AlgorithmParameterGenerator paramGen = AlgorithmParameterGenerator.getInstance("DiffieHellman");
-//            paramGen.init(2048); // Adjust key size as needed
-//            AlgorithmParameters params = paramGen.generateParameters();
-//            DHParameterSpec dhSpec = params.getParameterSpec(DHParameterSpec.class);
-//
-//            // Initialize the key pair generator with the Diffie-Hellman parameters
-//            keyPairGenerator.initialize(dhSpec);
-//            keyPair = keyPairGenerator.generateKeyPair();
-//        } catch (InvalidAlgorithmParameterException | InvalidParameterSpecException | NoSuchAlgorithmException e) {
-//            // Print the stack trace for debugging purposes
-//            e.printStackTrace();
-//            throw new RuntimeException("Error generating key pair", e);
-//        }
-//    }
     private GenerateKeyPair() {
         // Private constructor to prevent instantiation
         try {
@@ -46,29 +31,37 @@ public class GenerateKeyPair {
             // secp256r1 [NIST P-256, X9.62 prime256v1]
             // secp384r1 [NIST P-384]
             // secp521r1 [NIST P-521]
-
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC", "SunEC");
+            keyFactory = KeyFactory.getInstance("EC");
             ECGenParameterSpec ecParameterSpec = new ECGenParameterSpec(ecdhCurvenameString);
             keyPairGenerator.initialize(ecParameterSpec);
             KeyPair ecdhKeyPair = keyPairGenerator.genKeyPair();
             keyPair = ecdhKeyPair;
-            PrivateKey privateKey = ecdhKeyPair.getPrivate();
-            PublicKey publicKey = ecdhKeyPair.getPublic();
-            System.out.println("privateKey: " + privateKey);
-            System.out.println("publicKey: " + publicKey);
-
+            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(keyPair.getPublic().getEncoded());
+            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+            byte[] rawPublicKey = publicKey.getEncoded();
+            base64EncodedPublicKey = Base64.getEncoder().encodeToString(rawPublicKey);
         } catch (InvalidAlgorithmParameterException | NoSuchProviderException | NoSuchAlgorithmException e) {
             // Print the stack trace for debugging purposes
             e.printStackTrace();
             throw new RuntimeException("Error generating key pair", e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
         }
     }
     public static KeyPair getInstanceKeyPair() {
         return keyPair;
     }
-    public static String generateSharedSecret(PublicKey clientPublicKey) {
-        String sharedSecret = "";
+    public static String getBase64EncodedPublicKey(){return base64EncodedPublicKey;}
+    public static SecretKey generateSharedSecret(String based64EncodedString) {
+        SecretKey sharedSecret = null;
+        byte[] publicKeyBytes = Base64.getDecoder().decode(based64EncodedString);
+        // Create an X509EncodedKeySpec from the decoded bytes
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
         try {
+            // Get the public key from the key specification
+            PublicKey clientPublicKey =  keyFactory.generatePublic(keySpec);
+
             // Create KeyAgreement instance using the Diffie-Hellman algorithm
             KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
 
@@ -79,16 +72,18 @@ public class GenerateKeyPair {
             keyAgreement.doPhase(clientPublicKey, true);
             byte[] sharedSecretBytes = keyAgreement.generateSecret();
 
-            // Convert the shared secret to a base64-encoded string
-            sharedSecret = Base64.getEncoder().encodeToString(sharedSecretBytes);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            // Ensure that the shared secret is 256 bits (32 bytes) for AES/GCM-256
+            if (sharedSecretBytes.length != 32) {
+                throw new RuntimeException("Invalid shared secret length");
+            }
+            // Convert the shared secret to a SecretKey
+            sharedSecret = new SecretKeySpec(sharedSecretBytes, 0, 32, "AES");
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException |InvalidKeyException e) {
             // Handle exceptions
             e.printStackTrace();
         }
         return sharedSecret;
     }
-
-
     public static void main(String[] args) {
         for (Provider provider : Security.getProviders()) {
             System.out.println("Provider: " + provider.getName() + " version: " + provider.getVersionStr());

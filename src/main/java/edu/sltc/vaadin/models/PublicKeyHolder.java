@@ -35,16 +35,5 @@ public class PublicKeyHolder extends HashMap<String, String> {
     public String get(Object key) {
         return super.get(key);
     }
-    public PublicKey get(String key){
-        byte[] publicKeyBytes = Base64.getDecoder().decode(super.get(key));
-        // Create an X509EncodedKeySpec from the decoded bytes
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-        // Get the public key from the key specification
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
-            return keyFactory.generatePublic(keySpec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new RuntimeException(e);
-        }
-    }
+
 }
