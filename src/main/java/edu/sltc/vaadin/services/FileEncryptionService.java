@@ -4,6 +4,8 @@ import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -56,7 +58,28 @@ public class FileEncryptionService {
             e.printStackTrace();
         }
     }
+    public static String encryptFile(String inputFilePath, SecretKey sharedSecret) throws RuntimeException{
+        try {
+            byte[] fileContent = Files.readAllBytes(Path.of(inputFilePath));
 
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            byte[] iv = new byte[12]; // Initialization Vector, you may want to generate a random IV
+            GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, sharedSecret, parameterSpec);
+
+            byte[] encryptedBytes = cipher.doFinal(fileContent);
+            byte[] combined = new byte[iv.length + encryptedBytes.length];
+            System.arraycopy(iv, 0, combined, 0, iv.length);
+            System.arraycopy(encryptedBytes, 0, combined, iv.length, encryptedBytes.length);
+
+            System.out.println("Encrypted File Done!!");
+            return java.util.Base64.getEncoder().encodeToString(combined);
+        } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException |
+                 InvalidAlgorithmParameterException | InvalidKeyException |
+                 BadPaddingException | IllegalBlockSizeException e) {
+            throw new RuntimeException("Error encrypting file: " + e.getMessage(), e);
+        }
+    }
 
 
 }

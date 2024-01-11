@@ -1,6 +1,7 @@
 package edu.sltc.vaadin.views.studentdashboard;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.JsModule;
@@ -10,23 +11,29 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.models.PublicKeyHolder;
+import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import org.apache.commons.compress.utils.IOUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.logging.Logger;
 
 @PageTitle("Student Dashboard")
@@ -139,14 +146,22 @@ public class StudentDashboardView extends VerticalLayout {
                             throw new RuntimeException(e);
                         }
                     });
-            System.out.println("Resource Name: "+streamResource.getName());
             Anchor downloadLink = new Anchor(streamResource, "" );
             downloadLink.getElement().setAttribute("download", true);
             downloadLink.getElement().getStyle().set("display", "none");
             Button downloadBtn = new Button("Download Paper");
-            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
+//            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
+            downloadBtn.addClickListener(buttonClickEvent -> {
+                UI.getCurrent().getPage().executeJs("downloadPaper();");
+            });
             add(downloadBtn, downloadLink);
 
+            //Base64.getEncoder().encodeToString(fileContent)
+            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                String encryptedFile = FileEncryptionService.encryptFile("src/main/resources/examFile_nuyunpabasara457@gmail.com.pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+//                UI.getCurrent().getSession().setAttribute("encryptedFile", encryptedFile);
+                WebStorage.setItem(WebStorage.Storage.SESSION_STORAGE, "encryptedFile", encryptedFile);
+            }
 
         } else {
             H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
