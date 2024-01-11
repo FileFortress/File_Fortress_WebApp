@@ -224,7 +224,7 @@ public class SetupExamView extends VerticalLayout {
 
         //give access to students and have to add user to InMemoryUserDetailsManager
         String defaultPassword = "harindu123";
-        senderService.sendEmail("nuyunpabasara@gmail.com", "User Password", defaultPassword);
+//        senderService.sendEmail("nuyunpabasara@gmail.com", "User Password", defaultPassword);
         userDetailsManager.createUser(User.withUsername("nuyun457@gmail.com")
                 .password(new BCryptPasswordEncoder().encode(defaultPassword))
                 .roles("USER")

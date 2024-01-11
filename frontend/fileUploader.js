@@ -11,8 +11,8 @@ window.uploadFile = function uploadFile(){
         console.log('File selected:', event.detail.file.name);
         event.detail.xhr.setRequestHeader('File-Name', event.detail.file.name);
         let formData = new FormData();
-        //TODO: I want to encrypt the file here and send the encrypted one to the server.
-        // here is the shared secret AES-GCM /256 key
+        // encrypt the file here and send the encrypted one to the server.
+        // shared secret AES-GCM /256 key
 
 
         // Encrypt the file using the shared secret key

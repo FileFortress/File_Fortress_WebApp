@@ -1,13 +1,12 @@
 package edu.sltc.vaadin.views.studentdashboard;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -15,19 +14,26 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.stereotype.Service;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.logging.Logger;
 
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
 //@RouteAlias(value = "", layout = MainLayout.class)
 @RolesAllowed("USER")
-//@JsModule()
+@JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
     private TextField otpField;
     private final int otp = 2045;
@@ -121,8 +127,27 @@ public class StudentDashboardView extends VerticalLayout {
             Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
             add(Late_submission);
             formLayout.setColspan(Late_submission, 2);
+
+            /*
+             * Download Button
+             */
+            StreamResource streamResource = new StreamResource("examFile_nuyunpabasara457@gmail.com.pdf",
+                    () -> {
+                        try {
+                            return new FileInputStream("src/main/resources/examFile_nuyunpabasara457@gmail.com.pdf");
+                        } catch (FileNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            System.out.println("Resource Name: "+streamResource.getName());
+            Anchor downloadLink = new Anchor(streamResource, "" );
+            downloadLink.getElement().setAttribute("download", true);
+            downloadLink.getElement().getStyle().set("display", "none");
             Button downloadBtn = new Button("Download Paper");
-            add(downloadBtn);
+            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
+            add(downloadBtn, downloadLink);
+
+
         } else {
             H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
             add(errorHeader);
@@ -133,6 +158,18 @@ public class StudentDashboardView extends VerticalLayout {
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
     }
+
+//    private InputStream getFileInputStream(String mail) {
+//        FileInputStream stream = null;
+//        try {
+//            stream = new FileInputStream(file);
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return stream;
+//    }
+
     private Div createTimerLayout() {
         Div layout = new Div();
         layout.getStyle().set("font-size", "30px");
