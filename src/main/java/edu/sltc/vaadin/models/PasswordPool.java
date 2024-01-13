@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.models;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Set;
 
 /**
@@ -9,6 +11,7 @@ import java.util.Set;
  * @package edu.sltc.vaadin.models
  * @project_Name File_Fortress_WebApp
  */
+//@Component
 public class PasswordPool {
     private static PasswordPool instance;
     private Set<String> adminEmails, studentEmails;

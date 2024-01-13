@@ -1,11 +1,11 @@
 
 // File Uploader
-window.uploadFile = function uploadFile(){
+window.uploadFile = function uploadFile(id){
     console.log('JS part Executed');
     // window.document.getElementById('myVaadinUpload').setAttribute('target', 'http://localhost:4444/fortress/file_upload');
     // const target = window.document.getElementById('myVaadinUpload').getAttribute('target');
 
-    const upload = window.document.getElementById('myVaadinUpload');
+    const upload = window.document.getElementById(id);
     upload.addEventListener('upload-request', function(event) {
         event.preventDefault();
         console.log('File selected:', event.detail.file.name);

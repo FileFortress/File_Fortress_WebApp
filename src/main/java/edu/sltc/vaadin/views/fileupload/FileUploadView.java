@@ -17,6 +17,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.views.MainLayout;
 import edu.sltc.vaadin.views.setupexam.FileReceiver;
 import jakarta.annotation.security.DeclareRoles;
@@ -30,7 +31,7 @@ import jakarta.annotation.security.RolesAllowed;
 public class FileUploadView extends HorizontalLayout {
 
     private TextField otpField;
-    private final int otp = 2045;
+//    private final int otp = 2045;
     private Dialog dialog;
 
     public FileUploadView() {
@@ -130,7 +131,7 @@ public class FileUploadView extends HorizontalLayout {
         // Check OTP and proceed with login
         try {
             int enteredOtp = Integer.parseInt(otpField.getValue());
-            if (enteredOtp == otp) {
+            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
                 // Continue with login logic
                 dialog.close();
             } else {

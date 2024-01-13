@@ -50,7 +50,7 @@ public class CurrentWifiHandler {
                     InetAddress address = addresses.nextElement();
                     // Check if it's an IPv4 address
                     if (address.getHostAddress().contains(".") &&  address.isSiteLocalAddress()) {
-                        System.out.println("IPv4 Address on " + iface.getDisplayName() + ": " + address.getHostAddress());
+//                        System.out.println("IPv4 Address on " + iface.getDisplayName() + ": " + address.getHostAddress());
                         ipList.put(iface.getDisplayName(), address.getHostAddress());
                     }
 

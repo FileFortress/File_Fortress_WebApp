@@ -22,6 +22,7 @@ import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.services.FileEncryptionService;
+import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
     private TextField otpField;
-    private final int otp = 2045;
+//    private final int otp = 2045;
     private Dialog dialog;
 
     public StudentDashboardView() {
@@ -54,14 +55,14 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * module name
              */
-            H1 header_one = new H1(examModel.getModuleName());
+            H1 header_one = new H1(examModel.getModuleName().orElse(""));
             header_one.addClassNames(LumoUtility.Margin.Top.MEDIUM, LumoUtility.Margin.Bottom.XSMALL);
             header_one.setWidthFull();
             add(header_one);
             /*
              * module code
              */
-            H2 header_two = new H2(examModel.getModuleCode());
+            H2 header_two = new H2(examModel.getModuleCode().orElse(" "));
             header_two.addClassNames(LumoUtility.Margin.Top.XSMALL, LumoUtility.Margin.Bottom.MEDIUM);
             header_two.setWidthFull();
             add(header_two);
@@ -92,14 +93,14 @@ public class StudentDashboardView extends VerticalLayout {
             timeLayout.setWidthFull(); //set full width of component
 
             // Start time
-            Span start_time = new Span("Start Time: " + examModel.getStartTime());
+            Span start_time = new Span("Start Time: " + examModel.getStartTime().orElse(null));
             timeLayout.add(start_time);
 
             // Spacer
             timeLayout.add(new HorizontalLayout(new Span(" "))); // Add a spacer
 
             // End time
-            Span end_time = new Span("End Time: " + examModel.getEndTime());
+            Span end_time = new Span("End Time: " + examModel.getEndTime().orElse(null));
             timeLayout.add(end_time);
 
             // Add the time layout to the form layout
@@ -119,7 +120,7 @@ public class StudentDashboardView extends VerticalLayout {
             TextArea examInstructions = new TextArea("Exam Instructions");
             examInstructions.setHeight("500px");
             examInstructions.setMaxWidth("1000px");
-            examInstructions.setValue(examModel.getModuleDescription());
+            examInstructions.setValue(examModel.getModuleDescription().orElse(""));
             examInstructions.setReadOnly(true);
             examInstructions.setWidthFull();
             add(examInstructions);
@@ -141,7 +142,7 @@ public class StudentDashboardView extends VerticalLayout {
             StreamResource streamResource = new StreamResource("examFile_nuyunpabasara457@gmail.com.pdf",
                     () -> {
                         try {
-                            return new FileInputStream("src/main/resources/examFile_nuyunpabasara457@gmail.com.pdf");
+                            return new FileInputStream("Uploads/examFile_nuyunpabasara457@gmail.com.pdf");
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);
                         }
@@ -158,7 +159,7 @@ public class StudentDashboardView extends VerticalLayout {
 
             //Base64.getEncoder().encodeToString(fileContent)
             if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                String encryptedFile = FileEncryptionService.encryptFile("src/main/resources/examFile_nuyunpabasara457@gmail.com.pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                String encryptedFile = FileEncryptionService.encryptFile("Uploads/examFile_nuyunpabasara457@gmail.com.pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
 //                UI.getCurrent().getSession().setAttribute("encryptedFile", encryptedFile);
                 WebStorage.setItem(WebStorage.Storage.SESSION_STORAGE, "encryptedFile", encryptedFile);
             }
@@ -273,8 +274,8 @@ public class StudentDashboardView extends VerticalLayout {
     private void performLogin() {
         // Implement your login logic here
         // Check OTP and proceed with login
-        int enteredOtp = Integer.parseInt(otpField.getValue());
-        if (enteredOtp == otp) {
+        String enteredOtp = String.valueOf(otpField.getValue());
+        if (enteredOtp.equals(OTPGenerator.getInstance().getOTP())) {
             // Continue with login logic
             dialog.close();
         } else {

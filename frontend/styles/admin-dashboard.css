@@ -1,0 +1,40 @@
+/* admin-dashboard-custom-styles.css */
+
+:host([theme~="vaadin-form-layout"]) [id="layout"] {
+    /* Your custom styles for the shadow DOM here */
+    display: flex;
+        align-items: stretch;
+        flex-direction: row;
+        align-content: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    /* Add any other styles you want to apply */
+}
+
+
+/*[part="vaadin-form-layout"]::shadow #layout{*/
+/*    display: flex;*/
+/*    align-items: stretch;*/
+/*    flex-direction: row;*/
+/*    align-content: center;*/
+/*    justify-content: center;*/
+/*    flex-wrap: wrap;*/
+/*}*/
+/*#my-top-form-layout [id="layout"]{*/
+/*    display: flex;*/
+/*    align-items: stretch;*/
+/*    flex-direction: row;*/
+/*    align-content: center;*/
+/*    justify-content: center;*/
+/*    flex-wrap: wrap;*/
+/*}*/
+/*!* styles.css *!*/
+
+/*!* Target the Vaadin FormLayout with the shadow DOM *!*/
+/*[part="vaadin-form-layout"]::shadow #layout {*/
+/*    !* Your styles for the "layout" div inside the shadow DOM *!*/
+/*    !* Example styles: *!*/
+/*    font-size: 20px;*/
+/*    color: #555;*/
+/*    !* Add more styles as needed *!*/
+/*}*/
