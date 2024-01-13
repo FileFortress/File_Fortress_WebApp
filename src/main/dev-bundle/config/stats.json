@@ -247,6 +247,7 @@
   "@vaadin/virtual-list/theme/lumo/vaadin-virtual-list.js",
   "Frontend//styles/login-view.css",
   "Frontend/adminDashboard.js",
+  "Frontend/clientDecrypt.js",
   "Frontend/fileUploader.js",
   "Frontend/generated/jar-resources/buttonFunctions.js",
   "Frontend/generated/jar-resources/comboBoxConnector.js",
@@ -271,14 +272,18 @@
   "Frontend/generated/jar-resources/virtualListConnector.js",
   "Frontend/loginView.js",
   "Frontend/simple-timer.js",
+  "Frontend/styles/admin-dashboard.css",
   "Frontend/test.js"
  ],
  "frontendHashes": {
   "themes/my-app/components/vaadin-button.css": "fb360cc9c7c5892b8c5b186c0b057b22f61c20d55854706f4320938cd5dc0e01",
+  "styles/admin-dashboard.css": "7b922f254d38554b698b10c9d234068594cbe0d5ad187bb1f7c6fb760ff9baf9",
   "styles/login-view.css": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "simple-timer.js": "9e132736a445a91efa952640fb7e1aebf1af34de044e0287c4a288f06a32b240",
   "test.js": "b7b37838905944723b1dbe101031c2b5946e208269e1e198693b60c4ffcf8a50",
-  "fileUploader.js": "c3378703770207e4cfd301c439cb6e9925a876105506a5b112ba2d8eb80aedcd",
+  "adminDashboard.js": "2d0a20c99f1fb72a0cb67cb95221ef0ea8dd8a0ef0be33d83395b142d847fb5f",
+  "fileUploader.js": "81bca85d2667d1a107666b2db5362d97b5a310d12a785d6513ebf7d91f3cf39c",
+  "clientDecrypt.js": "5ae36cbcf383871bd364cd795c2f91fb80fae6e738b04bfabb8077841c89e0a4",
   "buttonFunctions.js": "c852123f9b2c44eb75e555119d3e05a7dbe78b91d0ab616feb9df1654474707d",
   "comboBoxConnector.js": "1d004c3dae9c76f8bcc68678abe1b8f7bdc8b456f5c9c4c7f190df8ed25d66cd",
   "contextMenuConnector.js": "8960e00884b9a8b62e24be63e03fe7045dcb9b6844a8a238eb4619d5595e2cfc",
@@ -305,7 +310,7 @@
   "my-app": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-4f48d7b7.js"
+  "VAADIN/build/indexhtml-c742aea2.js"
  ],
  "webComponents": [],
  "cvdlModules": {
@@ -340,6 +345,6 @@
  },
  "packageJsonHash": "3528802ccc0a0cc916ed0fe8fafed5b853e5f84c599e9fa068106d9f91aec8d5",
  "indexHtmlGenerated": [
-  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-4f48d7b7.js\"></script>"
+  "  <script type=\"module\" crossorigin src=\"./VAADIN/build/indexhtml-c742aea2.js\"></script>"
  ]
 }

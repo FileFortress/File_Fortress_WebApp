@@ -1,6 +1,7 @@
 package edu.sltc.vaadin.models;
 
 import java.time.LocalTime;
+import java.util.Optional;
 
 /**
  * @author Nuyun-Kalamullage
@@ -33,60 +34,63 @@ public class ExamModel {
     }
 
     // Getter and setter methods for exam details
-    public String getModuleCode() {
-        return moduleCode;
+    public Optional<String> getModuleCode() {
+        return Optional.ofNullable(moduleCode);
     }
 
     public void setModuleCode(String moduleCode) {
         this.moduleCode = moduleCode;
     }
 
-    public String getModuleName() {
-        return moduleName;
+    public Optional<String> getModuleName() {
+        return Optional.ofNullable(moduleName);
     }
 
     public void setModuleName(String moduleName) {
         this.moduleName = moduleName;
     }
 
-    public String getModuleDescription() {
-        return moduleDescription;
+    public Optional<String> getModuleDescription() {
+        return Optional.ofNullable(moduleDescription);
     }
 
     public void setModuleDescription(String moduleDescription) {
         this.moduleDescription = moduleDescription;
     }
 
-    public String getLateSubmission() {
-        return lateSubmission;
+    public Optional<String> getLateSubmission() {
+        return Optional.ofNullable(lateSubmission);
     }
 
     public void setLateSubmission(String lateSubmission) {
         this.lateSubmission = lateSubmission;
     }
 
-    public LocalTime getStartTime() {
-        return startTime;
+    public Optional<LocalTime> getStartTime() {
+        return Optional.ofNullable(startTime);
     }
 
     public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
     }
 
-    public LocalTime getEndTime() {
-        return endTime;
+    public Optional<LocalTime> getEndTime() {
+        return Optional.ofNullable(endTime);
     }
 
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
     }
 
-    public String getExamPaperName() {
-        return ExamPaperName;
+    public Optional<String> getExamPaperName() {
+        return Optional.ofNullable(ExamPaperName);
     }
 
     public void setExamPaperName(String examPaperName) {
         ExamPaperName = examPaperName;
+    }
+    public void resetInstance(){
+        instance = new ExamModel();
     }
 
     @Override
