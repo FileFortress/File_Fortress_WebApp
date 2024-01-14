@@ -1,23 +1,21 @@
 package edu.sltc.vaadin.views.admindashboard;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.dom.ShadowRoot;
-import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.Command;
+import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.data.OTPListener;
+import edu.sltc.vaadin.data.WifiListener;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
@@ -28,8 +26,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static oshi.util.Util.sleep;
 
 
 @PageTitle("Admin Dashboard")
@@ -43,6 +39,7 @@ public class AdminDashboardView extends VerticalLayout {
     private UI ui;
     private Timer timer, wifiTimer, otpTimer;
     private OTPListener otpListener;
+    private WifiListener wifiListener;
     public AdminDashboardView() {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -50,19 +47,10 @@ public class AdminDashboardView extends VerticalLayout {
         ui = UI.getCurrent();
         Div firstModule = new Div();
         firstModule.setMaxWidth("800px");
-//        firstModule.setSizeFull();
         firstModule.addClassNames(Margin.Top.MEDIUM, Margin.Bottom.MEDIUM);
         add(firstModule);
         FormLayout formLayoutOne = new FormLayout();
-        formLayoutOne.getElement().getShadowRoot().ifPresent((shadowRoot)->{
-            shadowRoot.getChild(0).getStyle().set( "align-content", "center");
-            shadowRoot.getChild(0).getStyle().set( "justify-content", "center");
-            shadowRoot.getChild(0).getStyle().set( "align-content", "center");
-            System.out.println("added!");
-        });
-
         formLayoutOne.getElement().setAttribute("id", "my-top-form-layout");
-//        formLayoutOne.setWidthFull();
         firstModule.add(formLayoutOne);
         Div timer1 = createTimerLayout();
         formLayoutOne.add(timer1);
@@ -74,11 +62,10 @@ public class AdminDashboardView extends VerticalLayout {
                 new FormLayout.ResponsiveStep("400px", 4));
         setSpacing(false);
         otp1.getComponentAt(1).getElement().setText(OTPGenerator.getInstance().getOTP());
-        otpListener = (s)->{
+        otpListener = (otpValue)->{
             ui.access(()->{
                 otp1.getComponentAt(1).getElement().getStyle().setColor("white");
-                otp1.getComponentAt(1).getElement().setText(s);
-                ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
+                otp1.getComponentAt(1).getElement().setText(otpValue);
                 // Push an empty update to trigger a background refresh
                 ui.push();
             });
@@ -89,8 +76,6 @@ public class AdminDashboardView extends VerticalLayout {
                     otp1.getComponentAt(1).getElement().getStyle().setColor("red");
                     // Push an empty update to trigger a background refresh
                     ui.push();
-                    // Set push mode back to AUTOMATIC (optional)
-                    ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
                 });}
             },7000);
         };
@@ -127,27 +112,20 @@ public class AdminDashboardView extends VerticalLayout {
 
         add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
         getStyle().set("text-align", "center");
+
         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":80" );
+        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
         JoinedStudentsTextField.setValue("25");
         submissionCountTextField.setValue("10");
-        wifiTimer = new Timer(true);
-        wifiTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                ui.access(() ->{
-                    WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-                    ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
-                    // Set push mode to MANUAL to enable background updates
-                    ui.getPushConfiguration().setPushMode(PushMode.MANUAL);
-                    // Push an empty update to trigger a background refresh
-                    ui.push();
-                    // Set push mode back to AUTOMATIC (optional)
-                    ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
-                });
-            }
-        },0,5000);
-
+        wifiListener = (wifiSSID)->{
+            ui.access(() ->{
+                WifiTextField.setValue(wifiSSID);
+                ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
+                // Push an empty update to trigger a background refresh
+                ui.push();
+            });
+        };
+        CurrentWifiHandler.getInstance().setListeners(wifiListener);
     }
     private Div firstDivFlexbox(){
         Div layout = new Div();
@@ -219,10 +197,17 @@ public class AdminDashboardView extends VerticalLayout {
         OTPGenerator.getInstance().removeListener(otpListener);
     }
     private void stopWifiTimer() {
-        if (wifiTimer != null) {
-            wifiTimer.cancel();
-            wifiTimer.purge();
-        }
+//        if (wifiTimer != null) {
+//            wifiTimer.cancel();
+//            wifiTimer.purge();
+//        }
+        CurrentWifiHandler.getInstance().removeListeners(wifiListener);
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
+        super.onAttach(attachEvent);
     }
 
     @Override
