@@ -1,8 +1,10 @@
 package edu.sltc.vaadin.views.fileupload;
 
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -15,23 +17,29 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.models.PublicKeyHolder;
+import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.views.MainLayout;
 import edu.sltc.vaadin.views.setupexam.FileReceiver;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
-
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 
 @PageTitle("File Upload")
 @Route(value = "file_transfer", layout = MainLayout.class)
 @RolesAllowed("USER")
+@JsModule("./fileUploader.js")
 public class FileUploadView extends HorizontalLayout {
 
     private TextField otpField;
-//    private final int otp = 2045;
     private Dialog dialog;
 
     public FileUploadView() {
@@ -45,21 +53,23 @@ public class FileUploadView extends HorizontalLayout {
         upload.setMinHeight("330px");
 
         /*
-        * checkBox Component
-        */
+         * checkBox Component
+         */
         Checkbox answerValidationCheckBox = new Checkbox();
         answerValidationCheckBox.setLabel("I Acknowledged that these submission is honest work from me");
         answerValidationCheckBox.getStyle().setMargin("20px");
 
         /*
-        * Button component
-        */
+         * Button component
+         */
         Button submitButton = new Button("Submit");
         submitButton.setTooltipText("Submit Button");
         submitButton.setWidthFull();
         layout.add(upload,answerValidationCheckBox,submitButton);
         add(layout);
         showOtpDialog();
+        // Execute JavaScript code when the view is attached to the UI
+        UI.getCurrent().getPage().executeJs("uploadFile($0)","myVaadinUpload");
     }
 
     private static Upload getUpload() {
@@ -67,17 +77,20 @@ public class FileUploadView extends HorizontalLayout {
         Button uploadPDF = new Button("Upload PDF");
         uploadPDF.setTooltipText("You Can Select PDF file from here or You can Drag & Drop PDF FIle Directly");
         Upload upload = new Upload();
+        upload.setId("myVaadinUpload");
         // Define the file receiver that will handle the file upload
-        upload.setReceiver(new FileReceiver());
+        MemoryBuffer memoryBuffer = new MemoryBuffer();
+        upload.setReceiver(memoryBuffer);
         // Define the accepted file types. In this case, only PDF files are accepted.
         upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Answer Paper");
-//        uploadPDF.getStyle().set("left","50%");
-//        uploadPDF.getStyle().set("top","50%");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addFinishedListener(event -> {
+            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + event.getFileName(), GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+            }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
             Notification notification = Notification
@@ -116,10 +129,11 @@ public class FileUploadView extends HorizontalLayout {
         dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
         dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
         // Add "Login" button to the dialog
-        Button loginButton = new Button("Login", e -> {
+        Button loginButton = new Button("Submit", e -> {
             // Perform login action here
             performLogin();
         });
+        loginButton.addClickShortcut(Key.ENTER);
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialogLayout.add(loginButton);
 
@@ -136,11 +150,17 @@ public class FileUploadView extends HorizontalLayout {
                 dialog.close();
             } else {
                 // Display an error message for incorrect OTP
-                otpField.setErrorMessage("Enter Valid OTP!");
+                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
             }
         }catch (NumberFormatException e){
-            otpField.setErrorMessage("Enter Valid OTP!");
+            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+        } catch (Exception e){
+            e.getMessage();
         }
-
+        otpField.focus();
     }
 }

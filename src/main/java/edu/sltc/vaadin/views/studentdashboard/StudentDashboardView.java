@@ -1,6 +1,5 @@
 package edu.sltc.vaadin.views.studentdashboard;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -8,34 +7,26 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.ExamModel;
-import edu.sltc.vaadin.models.PublicKeyHolder;
-import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
-import org.apache.commons.compress.utils.IOUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.logging.Logger;
 
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
@@ -43,7 +34,7 @@ import java.util.logging.Logger;
 @RolesAllowed("USER")
 @JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
-    private TextField otpField;
+//    private TextField otpField;
 //    private final int otp = 2045;
     private Dialog dialog;
 
@@ -139,10 +130,11 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Download Button
              */
-            StreamResource streamResource = new StreamResource("examFile_nuyunpabasara457@gmail.com.pdf",
+            String examFileName = ExamModel.getInstance().getExamPaperName().orElseGet(()->"");
+            StreamResource streamResource = new StreamResource(examFileName,
                     () -> {
                         try {
-                            return new FileInputStream("Uploads/examFile_nuyunpabasara457@gmail.com.pdf");
+                            return new FileInputStream("Uploads/" + examFileName);
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);
                         }
@@ -151,18 +143,8 @@ public class StudentDashboardView extends VerticalLayout {
             downloadLink.getElement().setAttribute("download", true);
             downloadLink.getElement().getStyle().set("display", "none");
             Button downloadBtn = new Button("Download Paper");
-//            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
-            downloadBtn.addClickListener(buttonClickEvent -> {
-                UI.getCurrent().getPage().executeJs("downloadPaper();");
-            });
+            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
             add(downloadBtn, downloadLink);
-
-            //Base64.getEncoder().encodeToString(fileContent)
-            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                String encryptedFile = FileEncryptionService.encryptFile("Uploads/examFile_nuyunpabasara457@gmail.com.pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
-//                UI.getCurrent().getSession().setAttribute("encryptedFile", encryptedFile);
-                WebStorage.setItem(WebStorage.Storage.SESSION_STORAGE, "encryptedFile", encryptedFile);
-            }
 
         } else {
             H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
@@ -174,17 +156,6 @@ public class StudentDashboardView extends VerticalLayout {
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
     }
-
-//    private InputStream getFileInputStream(String mail) {
-//        FileInputStream stream = null;
-//        try {
-//            stream = new FileInputStream(file);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return stream;
-//    }
 
     private Div createTimerLayout() {
         Div layout = new Div();
@@ -251,7 +222,7 @@ public class StudentDashboardView extends VerticalLayout {
                 .set("font-size", "1.5em").set("font-weight", "bold");
 
         // Add an OTP input field
-        otpField = new TextField("OTP");
+        TextField otpField = new TextField("OTP");
         VerticalLayout fieldLayout = new VerticalLayout(otpField);
         fieldLayout.setSpacing(false);
         fieldLayout.setPadding(false);
@@ -261,27 +232,39 @@ public class StudentDashboardView extends VerticalLayout {
         dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
         dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
         // Add "Login" button to the dialog
-        Button loginButton = new Button("Login", e -> {
+        Button loginButton = new Button("Submit", e -> {
             // Perform login action here
-            performLogin();
+            performLogin(otpField);
         });
+        loginButton.addClickShortcut(Key.ENTER);
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialogLayout.add(loginButton);
 
         return dialogLayout;
     }
 
-    private void performLogin() {
+    private void performLogin(TextField otpField) {
         // Implement your login logic here
         // Check OTP and proceed with login
-        String enteredOtp = String.valueOf(otpField.getValue());
-        if (enteredOtp.equals(OTPGenerator.getInstance().getOTP())) {
-            // Continue with login logic
-            dialog.close();
-        } else {
-            // Display an error message for incorrect OTP
-            otpField.setErrorMessage("Enter Valid OTP!");
+        try {
+            int enteredOtp = Integer.parseInt(otpField.getValue());
+            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
+                // Continue with login logic
+                dialog.close();
+            } else {
+                // Display an error message for incorrect OTP
+                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+            }
+        } catch (NumberFormatException e){
+            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+        } catch (Exception e){
+            e.getMessage();
         }
+        otpField.focus();
     }
 
 }

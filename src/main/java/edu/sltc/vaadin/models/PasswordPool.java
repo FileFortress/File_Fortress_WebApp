@@ -11,7 +11,6 @@ import java.util.Set;
  * @package edu.sltc.vaadin.models
  * @project_Name File_Fortress_WebApp
  */
-//@Component
 public class PasswordPool {
     private static PasswordPool instance;
     private Set<String> adminEmails, studentEmails;

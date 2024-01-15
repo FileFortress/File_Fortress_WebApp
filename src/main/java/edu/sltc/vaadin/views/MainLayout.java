@@ -2,6 +2,7 @@ package edu.sltc.vaadin.views;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.PushConfiguration;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -17,6 +18,7 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
+import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.PublicKeyHolder;
@@ -46,6 +48,7 @@ public class MainLayout extends AppLayout {
     private H2 viewTitle;
     private AccessAnnotationChecker accessChecker;
     private Authentication authentication;
+    private SideNav nav;
 
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
@@ -81,7 +84,7 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNav createNavigation() {
-        SideNav nav = new SideNav();
+        nav = new SideNav();
         if (accessChecker.hasAccess(AdminDashboardView.class)) {
             nav.addItem(new SideNavItem("Admin Dashboard", AdminDashboardView.class, LineAwesomeIcon.CHART_AREA_SOLID.create()));
         }
@@ -119,7 +122,7 @@ public class MainLayout extends AppLayout {
             //<theme-editor-local-classname>
             div.addClassName("main-layout-div-1");
             div.add(avatar);
-            div.add(authentication.getName());
+            div.add(authentication.getName().split("@")[0]);
             div.add(icon);
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");
@@ -168,18 +171,25 @@ public class MainLayout extends AppLayout {
         }
     }
     private void sendServerPublicKeyToUser(GrantedAuthority grantedAuthority) {
-        UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
-        System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
-        if ("ADMIN".equals(grantedAuthority.getAuthority())) {
-            UI.getCurrent().navigate(AdminDashboardView.class);
-            UI.getCurrent().getPage().executeJs("ns.getServerPublic($0)", GenerateKeyPair.getInstanceKeyPair().getPublic());
+        System.out.println("Authority : "+ grantedAuthority.getAuthority());
+        if ("ROLE_ADMIN".equals(grantedAuthority.getAuthority())) {
+            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
             System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
-        } else if ("USER".equals(grantedAuthority.getAuthority())){
-            UI.getCurrent().navigate(StudentDashboardView.class);
-            //send the server diffie hellman public key to user via execute JS functions
-//            GenerateKeyPair.getInstanceKeyPair().getPublic();
-            UI.getCurrent().getPage().executeJs("console.log(\"Server send a Key: \", $0);", GenerateKeyPair.getInstanceKeyPair().getPublic());
+            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
+                sideNavItem.getElement().callJsFunction("click");
+                System.out.println("Admin !!!!");
+            });
+        } else if ("ROLE_USER".equals(grantedAuthority.getAuthority())){
+            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
             System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
+            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
+                sideNavItem.getElement().callJsFunction("click");
+                System.out.println("User !!!!");
+            });
+        } else{
+            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
+                sideNavItem.getElement().callJsFunction("click");
+            });
         }
     }
 

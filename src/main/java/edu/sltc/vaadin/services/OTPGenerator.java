@@ -66,7 +66,7 @@ public class OTPGenerator {
                 generateOTP();
 //                System.out.println("New OTP generated: " + currentOTP);
             }
-        }, 0, 10000); // 10000 milliseconds = 10 seconds
+        }, 0, 6000); // 6000 milliseconds = 06 seconds
     }
 }
 
