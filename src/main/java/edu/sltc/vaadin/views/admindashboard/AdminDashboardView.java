@@ -69,7 +69,7 @@ public class AdminDashboardView extends VerticalLayout {
                 // Push an empty update to trigger a background refresh
                 ui.push();
             });
-            // Execute below method to change color after 7 seconds
+            // Execute below method to change color after 3 seconds
             new Timer(true).schedule(new TimerTask() {
                 @Override
                 public void run() {ui.access(()->{
@@ -77,7 +77,7 @@ public class AdminDashboardView extends VerticalLayout {
                     // Push an empty update to trigger a background refresh
                     ui.push();
                 });}
-            },7000);
+            },3000);
         };
         OTPGenerator.getInstance().addListener(otpListener);
         ui.getPage().executeJs("setContentView()");

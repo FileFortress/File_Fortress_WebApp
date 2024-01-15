@@ -159,13 +159,13 @@ public class SetupExamView extends VerticalLayout {
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addSucceededListener(event -> {
-//            FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
+//           FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/examFile_"+user.getUsername()+".pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/examFile_"+user.getUsername().split("@")[0]+".pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                ExamModel.getInstance().setExamPaperName("examFile_" + user.getUsername().split("@")[0] + ".pdf");
             }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
-            ExamModel.getInstance().setExamPaperName(event.getFileName());
             Notification notification = Notification.show(event.getFileName()+" File uploaded successfully!");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             notification.setPosition(Notification.Position.BOTTOM_END);
@@ -194,7 +194,6 @@ public class SetupExamView extends VerticalLayout {
             }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
-            ExamModel.getInstance().setExamPaperName(event.getFileName());
             Notification notification = Notification.show(event.getFileName() + " File uploaded successfully!");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             notification.setPosition(Notification.Position.BOTTOM_END);

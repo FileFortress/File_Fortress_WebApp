@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.services;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -19,8 +21,11 @@ import java.util.Set;
  */
 @Service
 public class EmailSenderService {
+    private final JavaMailSender javaMailSender;
     @Autowired
-    private JavaMailSender javaMailSender;
+    public EmailSenderService(JavaMailSender javaMailSender) {
+        this.javaMailSender = javaMailSender;
+    }
 
     public void sendEmail(String toEmail, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
