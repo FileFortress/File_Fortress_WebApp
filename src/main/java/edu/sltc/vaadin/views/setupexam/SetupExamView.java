@@ -23,7 +23,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.data.PasswordGenerator;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.models.PasswordPool;
 import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.services.EmailExtractor;
 import edu.sltc.vaadin.services.EmailSenderService;
@@ -41,6 +43,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @PageTitle("Setup Exam")
 @Route(value = "host_exam", layout = MainLayout.class)
@@ -91,7 +95,7 @@ public class SetupExamView extends VerticalLayout {
         lateSubmission =  new RadioButtonGroup<>();
         lateSubmission.setLabel("Late Submission");
         lateSubmission.setItems("NO", "10 Minutes", "15 Minutes", "20 Minutes", "25 Minutes","30 Minutes");
-        lateSubmission.setValue("15 Minutes");
+        lateSubmission.setValue("NO");
         formLayout.add(lateSubmission);
         formLayout.setColspan(lateSubmission, 2);
 
@@ -208,7 +212,7 @@ public class SetupExamView extends VerticalLayout {
         moduleCode.setValue(examModel.getModuleCode().orElse(" "));
         moduleName.setValue(examModel.getModuleName().orElse(" "));
         moduleDescription.setValue(examModel.getModuleDescription().orElse(" "));
-        lateSubmission.setValue(examModel.getLateSubmission().orElse("No Late Submission Allowed"));
+        lateSubmission.setValue(examModel.getLateSubmission().orElse("NO"));
         startTimePicker.setValue(examModel.getStartTime().orElse(null));
         endTimePicker.setValue(examModel.getEndTime().orElse(null));
         if (ExamModel.serverIsRunning){
@@ -242,21 +246,30 @@ public class SetupExamView extends VerticalLayout {
         Notification.show("Exam details saved successfully!");
 
         //give access to students and have to add user to InMemoryUserDetailsManager
-
         List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
-        if (!emails.isEmpty()){
-            System.out.println(emails);
-            String defaultPassword = "harindu123";
-//            senderService.sendEmail("nuyunpabasara@gmail.com", "User Password", defaultPassword);
-            if (userDetailsManager.userExists("nuyun457@gmail.com")){
-                userDetailsManager.updatePassword(User.withUsername("nuyun457@gmail.com").password(new BCryptPasswordEncoder().encode(defaultPassword)).roles("USER").build(), defaultPassword);
-            }else {
-                userDetailsManager.createUser(User.withUsername("nuyun457@gmail.com")
-                        .password(new BCryptPasswordEncoder().encode(defaultPassword))
-                        .roles("USER")
-                        .build());
-            }
+        PasswordPool.getInstance().setStudentPasswords(PasswordGenerator.bulkPasswordForStudents(emails.size(),10));
+        if (!emails.isEmpty()) {
+            ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
+            int i = 0;
+            for (String email : emails) {
+                String password = PasswordPool.getInstance().getStudentPasswords().stream().toList().get(i++);
+                executorService.submit(() -> {
+                    if (userDetailsManager.userExists(email)){
+                        userDetailsManager.deleteUser(email);
+                        System.out.println("User exists");
+                    }
+                    senderService.sendEmail(email, "User Password", "Your User Password is " + password);
+                    userDetailsManager.createUser(User.withUsername(email)
+                            .password(new BCryptPasswordEncoder().encode(password))
+                            .roles("USER")
+                            .build());
+                    // Add user existence check and creation logic here if needed
+                    System.out.println("User Added");
 
+                });
+            }
+            executorService.shutdown();
+            System.out.println("All Users Added Successful");
         }
     }
 }

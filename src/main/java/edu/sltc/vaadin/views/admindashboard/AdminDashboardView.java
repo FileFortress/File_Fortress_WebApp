@@ -11,19 +11,22 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.data.OTPListener;
 import edu.sltc.vaadin.data.WifiListener;
+import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -45,6 +48,7 @@ public class AdminDashboardView extends VerticalLayout {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         ui = UI.getCurrent();
+        ExamModel examModel = ExamModel.getInstance();
         Div firstModule = new Div();
         firstModule.setMaxWidth("800px");
         firstModule.addClassNames(Margin.Top.MEDIUM, Margin.Bottom.MEDIUM);
@@ -52,7 +56,7 @@ public class AdminDashboardView extends VerticalLayout {
         FormLayout formLayoutOne = new FormLayout();
         formLayoutOne.getElement().setAttribute("id", "my-top-form-layout");
         firstModule.add(formLayoutOne);
-        Div timer1 = createTimerLayout();
+        Div timer1 = createTimerLayout(examModel.getEndTime());
         formLayoutOne.add(timer1);
         formLayoutOne.setColspan(timer1, 1);
         Div otp1 = otpViewer();
@@ -144,9 +148,9 @@ public class AdminDashboardView extends VerticalLayout {
         return layout;
     }
 
-    private Div createTimerLayout() {
+    private Div createTimerLayout(Optional<LocalTime> endTime) {
         Div layout = firstDivFlexbox();
-        SimpleTimer timer = getRemainingTimerLayout();
+        SimpleTimer timer = getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -167,7 +171,7 @@ public class AdminDashboardView extends VerticalLayout {
         layout.add(t1);
         return layout ;
     }
-    private SimpleTimer getRemainingTimerLayout() {
+    private SimpleTimer getRemainingTimerLayout(Optional<LocalTime> t) {
         // Calculate the remaining time and return it as a string
 //        // Define the target date and time
 //        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
@@ -177,7 +181,8 @@ public class AdminDashboardView extends VerticalLayout {
 
         // Define the target date and time
         // Add 3 hours to the current time
-        LocalDateTime targetDateTime = currentDateTime.plusHours(3);
+        LocalTime endTime = t.orElse(LocalTime.now());
+        LocalDateTime targetDateTime = LocalDate.now().atTime(endTime.getHour(), endTime.getMinute());
 
         // Calculate the difference between the current and target date and time
         long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);

@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.views.fileupload;
 
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -41,6 +43,8 @@ public class FileUploadView extends HorizontalLayout {
 
     private TextField otpField;
     private Dialog dialog;
+    private final MemoryBuffer memoryBuffer = new MemoryBuffer();
+    private String answerPaperName;
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
@@ -63,7 +67,27 @@ public class FileUploadView extends HorizontalLayout {
          * Button component
          */
         Button submitButton = new Button("Submit");
+        submitButton.setId("SubmitButton");
         submitButton.setTooltipText("Submit Button");
+        submitButton.addClickListener(new ComponentEventListener<ClickEvent<Button>>() {
+            @Override
+            public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+                if (answerValidationCheckBox.getValue()){
+                    if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                        FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + answerPaperName, GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                    }
+                    Notification notification = Notification
+                            .show(answerPaperName + " File Uploaded with Success!");
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notification.setPosition(Notification.Position.BOTTOM_END);
+                    notification.setDuration(2500);
+                }else {
+                    Notification notification = new Notification("Please make sure You have Check the Acknowledge.", 2000, Notification.Position.BOTTOM_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
+                }
+            }
+        });
         submitButton.setWidthFull();
         layout.add(upload,answerValidationCheckBox,submitButton);
         add(layout);
@@ -72,14 +96,13 @@ public class FileUploadView extends HorizontalLayout {
         UI.getCurrent().getPage().executeJs("uploadFile($0)","myVaadinUpload");
     }
 
-    private static Upload getUpload() {
+    private Upload getUpload() {
 
         Button uploadPDF = new Button("Upload PDF");
         uploadPDF.setTooltipText("You Can Select PDF file from here or You can Drag & Drop PDF FIle Directly");
         Upload upload = new Upload();
         upload.setId("myVaadinUpload");
         // Define the file receiver that will handle the file upload
-        MemoryBuffer memoryBuffer = new MemoryBuffer();
         upload.setReceiver(memoryBuffer);
         // Define the accepted file types. In this case, only PDF files are accepted.
         upload.setAcceptedFileTypes("application/pdf");
@@ -88,16 +111,13 @@ public class FileUploadView extends HorizontalLayout {
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addFinishedListener(event -> {
-            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + event.getFileName(), GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
-            }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
-            Notification notification = Notification
-                    .show(event.getFileName()+" File uploaded successfully!");
-            notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            answerPaperName = event.getFileName();
+            Notification notification = Notification.show(answerPaperName + " File Added To Waiting List!");
+            notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
             notification.setPosition(Notification.Position.BOTTOM_END);
-            notification.setDuration(2500);
+            notification.setDuration(1500);
         });
         return upload;
     }
