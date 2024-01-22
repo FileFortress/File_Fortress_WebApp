@@ -1,6 +1,5 @@
 package edu.sltc.vaadin.views.studentdashboard;
 import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.JsModule;
@@ -25,8 +24,11 @@ import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
@@ -34,7 +36,7 @@ import java.time.temporal.ChronoUnit;
 @RolesAllowed("USER")
 @JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
-//    private TextField otpField;
+    //    private TextField otpField;
 //    private final int otp = 2045;
     private Dialog dialog;
 
@@ -42,7 +44,11 @@ public class StudentDashboardView extends VerticalLayout {
         setSpacing(false);
         // Obtain the ExamModel instance
         ExamModel examModel = ExamModel.getInstance();
-        if (examModel.getExamPaperName() != null){
+
+        examModel.getExamPaperName().ifPresent((s)->{
+            System.out.println("Paper Name : " + s);
+        });
+        if (examModel.getExamPaperName().isPresent()){
             /*
              * module name
              */
@@ -67,17 +73,6 @@ public class StudentDashboardView extends VerticalLayout {
             formLayout.setMaxWidth("600px");
             moduleDetails.add(formLayout);
 
-//            /*
-//             * start time
-//             */
-//            Span start_time = new Span("Start Time : " + examModel.getStartTime());
-//            formLayout.add(start_time);
-//
-//            /*
-//             * end time
-//             */
-//            Span end_time = new Span("End Time : " + examModel.getEndTime());
-//            formLayout.add(end_time);
             // Inline "Start Time" and "End Time" components
             HorizontalLayout timeLayout = new HorizontalLayout();
             timeLayout.setAlignItems(Alignment.CENTER); // Align items vertically
@@ -100,10 +95,10 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Timer
              */
-            Div remainingTimeDiv = new Div();
+//          Div remainingTimeDiv = new Div();
             H2 remainingTime = new H2("Remaining Time");
             add(remainingTime);
-            add(createTimerLayout());
+            add(createTimerLayout(examModel.getEndTime()));
 
             /*
              * Exam Instructions
@@ -122,7 +117,9 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Late Submission
              */
-            Span Late_submission = new Span("No Late Submission Allowed");
+
+            String lateSubmission = examModel.getLateSubmission().orElse("NO");
+            Span Late_submission = new Span(lateSubmission + " Late Submission Allowed");
             Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
             add(Late_submission);
             formLayout.setColspan(Late_submission, 2);
@@ -157,7 +154,7 @@ public class StudentDashboardView extends VerticalLayout {
         getStyle().set("text-align", "center");
     }
 
-    private Div createTimerLayout() {
+    private Div createTimerLayout(Optional<LocalTime> endTime) {
         Div layout = new Div();
         layout.getStyle().set("font-size", "30px");
         layout.getStyle().set("color", "#333");
@@ -169,7 +166,7 @@ public class StudentDashboardView extends VerticalLayout {
         layout.getStyle().set("padding-bottom", "25px");
         layout.getStyle().set("border", "5px solid white");
         layout.getStyle().set("border-radius", "25px");
-        SimpleTimer timer = getRemainingTimerLayout();
+        SimpleTimer timer = getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -180,17 +177,19 @@ public class StudentDashboardView extends VerticalLayout {
         return layout;
     }
 
-    private SimpleTimer getRemainingTimerLayout() {
+    private SimpleTimer getRemainingTimerLayout(Optional<LocalTime> t) {
         // Calculate the remaining time and return it as a string
 //        // Define the target date and time
-//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
+//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 0, 0);
 
         // Get the current date and time
         LocalDateTime currentDateTime = LocalDateTime.now();
 
         // Define the target date and time
         // Add 3 hours to the current time
-        LocalDateTime targetDateTime = currentDateTime.plusHours(3);
+        LocalTime endTime = t.orElse(LocalTime.now());
+        LocalDateTime targetDateTime = LocalDate.now().atTime(endTime.getHour(), endTime.getMinute());
+
 
 
         // Calculate the difference between the current and target date and time

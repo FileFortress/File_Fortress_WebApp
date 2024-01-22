@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.models;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
 
@@ -89,6 +91,15 @@ public class ExamModel {
     public void setExamPaperName(String examPaperName) {
         ExamPaperName = examPaperName;
     }
+
+//    public Optional<LocalDateTime> getTimePeriod() {
+//        if (startTime != null && endTime != null) {
+//            Duration duration = Duration.between(startTime, endTime);
+//            return Optional.of(LocalDateTime.of(1, 1, 1, 0, 0).plus(duration));
+//        } else {
+//            return Optional.empty();
+//        }
+//    }
     public void resetInstance(){
         instance = new ExamModel();
     }

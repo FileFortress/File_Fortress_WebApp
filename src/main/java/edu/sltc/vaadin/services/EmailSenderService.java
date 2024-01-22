@@ -48,6 +48,4 @@ public class EmailSenderService {
         }
         System.out.println("Mails Sending Successful!!");
     }
-
-
 }
