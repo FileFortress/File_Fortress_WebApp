@@ -19,6 +19,7 @@ import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
+import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -40,9 +41,9 @@ public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;
     private TextField WifiTextField, ServerUrlTextField, JoinedStudentsTextField, submissionCountTextField;
     private UI ui;
-    private Timer timer, wifiTimer, otpTimer;
     private OTPListener otpListener;
     private WifiListener wifiListener;
+    private SimpleTimer timer;
     public AdminDashboardView() {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -56,7 +57,7 @@ public class AdminDashboardView extends VerticalLayout {
         FormLayout formLayoutOne = new FormLayout();
         formLayoutOne.getElement().setAttribute("id", "my-top-form-layout");
         firstModule.add(formLayoutOne);
-        Div timer1 = createTimerLayout(examModel.getEndTime());
+        Div timer1 = createTimerLayout(examModel.getEndDateTime());
         formLayoutOne.add(timer1);
         formLayoutOne.setColspan(timer1, 1);
         Div otp1 = otpViewer();
@@ -85,6 +86,7 @@ public class AdminDashboardView extends VerticalLayout {
         };
         OTPGenerator.getInstance().addListener(otpListener);
         ui.getPage().executeJs("setContentView()");
+//        timer.getElement().getChild(0).setText("00:00:00");
         // -------------------------------------------------------------------------------------------------------------
         Div moduleDetails = new Div();
 //        moduleDetails.setMaxWidth("800px");
@@ -148,9 +150,9 @@ public class AdminDashboardView extends VerticalLayout {
         return layout;
     }
 
-    private Div createTimerLayout(Optional<LocalTime> endTime) {
+    private Div createTimerLayout(Optional<LocalDateTime> endTime) {
         Div layout = firstDivFlexbox();
-        SimpleTimer timer = getRemainingTimerLayout(endTime);
+        timer = TimerConstants.getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -171,41 +173,10 @@ public class AdminDashboardView extends VerticalLayout {
         layout.add(t1);
         return layout ;
     }
-    private SimpleTimer getRemainingTimerLayout(Optional<LocalTime> t) {
-        // Calculate the remaining time and return it as a string
-//        // Define the target date and time
-//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
-
-        // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
-
-        // Define the target date and time
-        // Add 3 hours to the current time
-        LocalTime endTime = t.orElse(LocalTime.now());
-        LocalDateTime targetDateTime = LocalDate.now().atTime(endTime.getHour(), endTime.getMinute());
-
-        // Calculate the difference between the current and target date and time
-        long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);
-        long hours = ChronoUnit.HOURS.between(currentDateTime, targetDateTime);
-        long minutes = ChronoUnit.MINUTES.between(currentDateTime, targetDateTime);
-        long seconds = ChronoUnit.SECONDS.between(currentDateTime, targetDateTime);
-
-        // Return the remaining time as a string
-//        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
-        return new SimpleTimer(seconds);
-    }
     private void stopOtpTimer() {
-//            if (otpTimer != null) {
-//                otpTimer.cancel();
-//                otpTimer.purge();
-//            }
         OTPGenerator.getInstance().removeListener(otpListener);
     }
     private void stopWifiTimer() {
-//        if (wifiTimer != null) {
-//            wifiTimer.cancel();
-//            wifiTimer.purge();
-//        }
         CurrentWifiHandler.getInstance().removeListeners(wifiListener);
     }
 

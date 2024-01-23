@@ -172,24 +172,20 @@ public class MainLayout extends AppLayout {
     }
     private void sendServerPublicKeyToUser(GrantedAuthority grantedAuthority) {
         System.out.println("Authority : "+ grantedAuthority.getAuthority());
+        UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
+        System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
         if ("ROLE_ADMIN".equals(grantedAuthority.getAuthority())) {
-            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
-            System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
             nav.getChildren().findFirst().ifPresent((sideNavItem)->{
                 sideNavItem.getElement().callJsFunction("click");
                 System.out.println("Admin !!!!");
             });
         } else if ("ROLE_USER".equals(grantedAuthority.getAuthority())){
-            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
-            System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
             nav.getChildren().findFirst().ifPresent((sideNavItem)->{
                 sideNavItem.getElement().callJsFunction("click");
                 System.out.println("User !!!!");
             });
         } else{
-            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
-                sideNavItem.getElement().callJsFunction("click");
-            });
+            System.out.println("Annonymous User");
         }
     }
 
@@ -200,9 +196,6 @@ public class MainLayout extends AppLayout {
             System.out.println("Client Public : "+publicKey);
         }
         System.out.println(PublicKeyHolder.getInstance());
-        if (PublicKeyHolder.getInstance().containsKey("nuyunpabasara457@gmail.com")){
-            System.out.println(GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get("nuyunpabasara457@gmail.com")));
-        }
     }
 
 }

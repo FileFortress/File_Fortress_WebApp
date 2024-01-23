@@ -1,8 +1,10 @@
 package edu.sltc.vaadin.models;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 /**
@@ -20,8 +22,8 @@ public class ExamModel {
     private String moduleName;
     private String moduleDescription;
     private String lateSubmission;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private String ExamPaperName;
 
     private ExamModel() {
@@ -69,18 +71,24 @@ public class ExamModel {
     }
 
     public Optional<LocalTime> getStartTime() {
-        return Optional.ofNullable(startTime);
+        if (startTime != null)
+            return Optional.ofNullable(startTime.toLocalTime());
+        else
+            return Optional.empty();
     }
 
-    public void setStartTime(LocalTime startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
     public Optional<LocalTime> getEndTime() {
-        return Optional.ofNullable(endTime);
+        if (endTime != null)
+            return Optional.ofNullable(endTime.toLocalTime());
+        else
+            return Optional.empty();
     }
 
-    public void setEndTime(LocalTime endTime) {
+    public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
 
@@ -91,18 +99,39 @@ public class ExamModel {
     public void setExamPaperName(String examPaperName) {
         ExamPaperName = examPaperName;
     }
+    public Optional<LocalDateTime> getEndDateTime(){
+        if (startTime != null && endTime != null) {
+            LocalDateTime modifiedDateTime = endTime;
+            Duration duration = Duration.between(startTime, endTime);
+            if (duration.isNegative()) {
+                // If duration is negative, return the next day's LocalDate with the end time
+                modifiedDateTime = endTime.plusDays(1);
+            }
+            // If duration is not negative, calculate the end time normally
+            return Optional.of(modifiedDateTime.plusMinutes(getLateSubmissionValue().orElse(0)));
+        } else {
+            return Optional.empty();
+        }
+    }
 
-//    public Optional<LocalDateTime> getTimePeriod() {
-//        if (startTime != null && endTime != null) {
-//            Duration duration = Duration.between(startTime, endTime);
-//            return Optional.of(LocalDateTime.of(1, 1, 1, 0, 0).plus(duration));
-//        } else {
-//            return Optional.empty();
-//        }
-//    }
     public void resetInstance(){
         instance = new ExamModel();
     }
+    private Optional<Integer> getLateSubmissionValue() {
+        if (lateSubmission != null) {
+            return switch (lateSubmission) {
+                case "10 Minutes" -> Optional.of(10);
+                case "15 Minutes" -> Optional.of(15);
+                case "20 Minutes" -> Optional.of(20);
+                case "25 Minutes" -> Optional.of(25);
+                case "30 Minutes" -> Optional.of(30);
+                default -> Optional.empty();
+            };
+        } else {
+            return Optional.empty();
+        }
+    }
+
 
     @Override
     public String toString() {

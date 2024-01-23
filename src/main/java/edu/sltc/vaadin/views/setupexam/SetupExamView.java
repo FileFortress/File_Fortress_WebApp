@@ -39,6 +39,8 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,8 +240,8 @@ public class SetupExamView extends VerticalLayout {
         examModel.setModuleName(moduleNameValue);
         examModel.setModuleDescription(moduleDescriptionValue);
         examModel.setLateSubmission(lateSubmissionValue);
-        examModel.setStartTime(startTimeValue);
-        examModel.setEndTime(endTimeValue);
+        examModel.setStartTime( LocalDateTime.of(LocalDate.now(),startTimeValue));
+        examModel.setEndTime(LocalDateTime.of(LocalDate.now(),endTimeValue));
 
         System.out.println(examModel);
         // Display success message or navigate to the student dashboard
@@ -265,7 +267,6 @@ public class SetupExamView extends VerticalLayout {
                             .build());
                     // Add user existence check and creation logic here if needed
                     System.out.println("User Added");
-
                 });
             }
             executorService.shutdown();

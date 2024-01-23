@@ -39,14 +39,6 @@ window.getServerPublic = function getServerPublic(key) {
                         window.key.sendClientPublic(clientPublicKeyBase64);
                     })
                     .catch(error => console.error('Error exporting public key:', error));
-                // // Export the client's private key to base64 (if needed for client)
-                // crypto.subtle.exportKey('spki', privateKey)
-                //     .then(privateKeyArrayBuffer => {
-                //         const clientPrivateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKeyArrayBuffer)));
-                //         console.log("Client private Key (base64):", clientPrivateKeyBase64);
-                //         sessionStorage.setItem("clientPrivate", clientPrivateKeyBase64);
-                //     })
-                //     .catch(error => console.error('Error exporting private key:', error));
                 crypto.subtle.deriveKey(
                     {
                         name: 'ECDH',
