@@ -10,7 +10,6 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -23,16 +22,17 @@ import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.sltc.vaadin.data.GenerateKeyPair;
-import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.models.PublicKeyHolder;
+import edu.sltc.vaadin.services.CheckSubmittedAnswers;
 import edu.sltc.vaadin.services.FileEncryptionService;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.views.MainLayout;
-import edu.sltc.vaadin.views.setupexam.FileReceiver;
-import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 @PageTitle("File Upload")
@@ -45,6 +45,7 @@ public class FileUploadView extends HorizontalLayout {
     private Dialog dialog;
     private final MemoryBuffer memoryBuffer = new MemoryBuffer();
     private String answerPaperName;
+    private static final Set<String> answerSubmittedEmailSet = new HashSet<>();
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
@@ -75,6 +76,7 @@ public class FileUploadView extends HorizontalLayout {
                 if (answerValidationCheckBox.getValue()){
                     if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
                         FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + answerPaperName, GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                        CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
                     }
                     Notification notification = Notification
                             .show(answerPaperName + " File Uploaded with Success!");
@@ -183,4 +185,6 @@ public class FileUploadView extends HorizontalLayout {
         }
         otpField.focus();
     }
+
+
 }

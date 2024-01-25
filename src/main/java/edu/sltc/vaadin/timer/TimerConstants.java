@@ -22,10 +22,10 @@ public class TimerConstants {
         LocalDateTime currentDateTime = LocalDateTime.now();
 
         if (dateTime.isPresent()){
-            System.out.println(dateTime.get());
+//            System.out.println(dateTime.get());
             // Calculate the difference between the current and target date and time
             long seconds = ChronoUnit.SECONDS.between(currentDateTime, dateTime.get());
-            System.out.println("seconds : "+seconds);
+//            System.out.println("seconds : "+seconds);
             if (seconds <= 0){
                 Notification notification = new Notification("     Exam Time is Over!!    ", 2500, Notification.Position.TOP_CENTER);
                 notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);

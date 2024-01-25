@@ -13,20 +13,23 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
+import edu.sltc.vaadin.data.ConnectedStudentsListener;
 import edu.sltc.vaadin.data.OTPListener;
+import edu.sltc.vaadin.data.StudentsAnswerSubmissionListener;
 import edu.sltc.vaadin.data.WifiListener;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.services.CheckConnectedStudent;
+import edu.sltc.vaadin.services.CheckSubmittedAnswers;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
+import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.session.SessionRegistry;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,6 +46,8 @@ public class AdminDashboardView extends VerticalLayout {
     private UI ui;
     private OTPListener otpListener;
     private WifiListener wifiListener;
+    private ConnectedStudentsListener connectedStudentsListener;
+    private StudentsAnswerSubmissionListener studentsAnswerSubmissionListener;
     private SimpleTimer timer;
     public AdminDashboardView() {
         setSizeFull();
@@ -78,7 +83,7 @@ public class AdminDashboardView extends VerticalLayout {
             new Timer(true).schedule(new TimerTask() {
                 @Override
                 public void run() {ui.access(()->{
-                    otp1.getComponentAt(1).getElement().getStyle().setColor("red");
+                   otp1.getComponentAt(1).getElement().getStyle().setColor("red");
                     // Push an empty update to trigger a background refresh
                     ui.push();
                 });}
@@ -121,8 +126,21 @@ public class AdminDashboardView extends VerticalLayout {
 
         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
         ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
-        JoinedStudentsTextField.setValue("25");
-        submissionCountTextField.setValue("10");
+        JoinedStudentsTextField.setValue(CheckConnectedStudent.getStudentCount());
+        submissionCountTextField.setValue(CheckSubmittedAnswers.getAnswerCount());
+        connectedStudentsListener = studentCount->{
+            ui.access(()->{
+                JoinedStudentsTextField.setValue(studentCount);
+            });
+        };
+        CheckConnectedStudent.getInstance().addListener(connectedStudentsListener);
+        studentsAnswerSubmissionListener = answerCount->{
+            ui.access(()->{
+                submissionCountTextField.setValue(answerCount);
+            });
+        };
+        CheckSubmittedAnswers.getInstance().addListener(studentsAnswerSubmissionListener);
+
         wifiListener = (wifiSSID)->{
             ui.access(() ->{
                 WifiTextField.setValue(wifiSSID);
@@ -173,13 +191,6 @@ public class AdminDashboardView extends VerticalLayout {
         layout.add(t1);
         return layout ;
     }
-    private void stopOtpTimer() {
-        OTPGenerator.getInstance().removeListener(otpListener);
-    }
-    private void stopWifiTimer() {
-        CurrentWifiHandler.getInstance().removeListeners(wifiListener);
-    }
-
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
@@ -188,8 +199,10 @@ public class AdminDashboardView extends VerticalLayout {
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        stopOtpTimer();
-        stopWifiTimer();
+        OTPGenerator.getInstance().removeListener(otpListener);
+        CurrentWifiHandler.getInstance().removeListeners(wifiListener);
+        CheckConnectedStudent.getInstance().removeListener(connectedStudentsListener);
+        CheckSubmittedAnswers.getInstance().removeListener(studentsAnswerSubmissionListener);
         super.onDetach(detachEvent);
     }
 }
