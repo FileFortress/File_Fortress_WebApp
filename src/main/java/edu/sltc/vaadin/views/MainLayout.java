@@ -1,9 +1,6 @@
 package edu.sltc.vaadin.views;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ClientCallable;
-import com.vaadin.flow.component.PushConfiguration;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -18,10 +15,10 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
-import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.PublicKeyHolder;
+import edu.sltc.vaadin.services.CheckConnectedStudent;
 import edu.sltc.vaadin.views.about.AboutView;
 import edu.sltc.vaadin.views.admindashboard.AdminDashboardView;
 import edu.sltc.vaadin.views.fileupload.FileUploadView;
@@ -34,7 +31,8 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
-import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -50,6 +48,7 @@ public class MainLayout extends AppLayout {
     private Authentication authentication;
     private SideNav nav;
 
+    private static final Set<String> connectedEmails = new HashSet<>();
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
         this.authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -61,6 +60,7 @@ public class MainLayout extends AppLayout {
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
+        getUserEmailFromSecurityContext();
         UI.getCurrent().getPage().executeJs("key.init($0);",this);
         sendServerPublicKeyToUser(authentication.getAuthorities().stream().toList().get(0));
     }
@@ -140,6 +140,7 @@ public class MainLayout extends AppLayout {
         return layout;
     }
     public void logout() {
+        removeConnectedStudent();
         UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
         logoutHandler.logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
@@ -172,24 +173,20 @@ public class MainLayout extends AppLayout {
     }
     private void sendServerPublicKeyToUser(GrantedAuthority grantedAuthority) {
         System.out.println("Authority : "+ grantedAuthority.getAuthority());
+        UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
+        System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
         if ("ROLE_ADMIN".equals(grantedAuthority.getAuthority())) {
-            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
-            System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
             nav.getChildren().findFirst().ifPresent((sideNavItem)->{
                 sideNavItem.getElement().callJsFunction("click");
                 System.out.println("Admin !!!!");
             });
         } else if ("ROLE_USER".equals(grantedAuthority.getAuthority())){
-            UI.getCurrent().getPage().executeJs("getServerPublic($0);", GenerateKeyPair.getBase64EncodedPublicKey());
-            System.out.println("Server Public : " + GenerateKeyPair.getInstanceKeyPair().getPublic());
             nav.getChildren().findFirst().ifPresent((sideNavItem)->{
                 sideNavItem.getElement().callJsFunction("click");
                 System.out.println("User !!!!");
             });
         } else{
-            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
-                sideNavItem.getElement().callJsFunction("click");
-            });
+            System.out.println("Annonymous User");
         }
     }
 
@@ -200,9 +197,40 @@ public class MainLayout extends AppLayout {
             System.out.println("Client Public : "+publicKey);
         }
         System.out.println(PublicKeyHolder.getInstance());
-        if (PublicKeyHolder.getInstance().containsKey("nuyunpabasara457@gmail.com")){
-            System.out.println(GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get("nuyunpabasara457@gmail.com")));
-        }
     }
 
+    private void getUserEmailFromSecurityContext() {
+        if (authentication != null && authentication.isAuthenticated()) {
+            // Adjust this based on how your UserDetails contain the user's email and role
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+                // Check if the user has the role ROLE_USER
+                if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+                    // If the user has the role ROLE_USER, return the email
+                    connectedEmails.add(userDetails.getUsername());
+                    CheckConnectedStudent.getInstance().addStudentEmail(userDetails.getUsername());
+                }
+            }
+        }
+    }
+    private void removeConnectedStudent(){
+        if (authentication != null && authentication.isAuthenticated()) {
+            // Adjust this based on how your UserDetails contain the user's email and role
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+                // Check if the user has the role ROLE_USER
+                if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+                    // If the user has the role ROLE_USER, return the email
+                    connectedEmails.remove(userDetails.getUsername());
+                    CheckConnectedStudent.getInstance().removeStudentEmail(userDetails.getUsername());
+                    System.out.println("Removed the User "+userDetails.getUsername());
+                }
+            }
+        }
+    }
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        removeConnectedStudent();
+        super.onDetach(detachEvent);
+    }
 }

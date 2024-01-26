@@ -20,6 +20,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
+import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -48,7 +49,7 @@ public class StudentDashboardView extends VerticalLayout {
         examModel.getExamPaperName().ifPresent((s)->{
             System.out.println("Paper Name : " + s);
         });
-        if (examModel.getExamPaperName().isPresent()){
+        if (ExamModel.serverIsRunning){
             /*
              * module name
              */
@@ -98,7 +99,7 @@ public class StudentDashboardView extends VerticalLayout {
 //          Div remainingTimeDiv = new Div();
             H2 remainingTime = new H2("Remaining Time");
             add(remainingTime);
-            add(createTimerLayout(examModel.getEndTime()));
+            add(createTimerLayout(examModel.getEndDateTime()));
 
             /*
              * Exam Instructions
@@ -154,7 +155,7 @@ public class StudentDashboardView extends VerticalLayout {
         getStyle().set("text-align", "center");
     }
 
-    private Div createTimerLayout(Optional<LocalTime> endTime) {
+    private Div createTimerLayout(Optional<LocalDateTime> endTime) {
         Div layout = new Div();
         layout.getStyle().set("font-size", "30px");
         layout.getStyle().set("color", "#333");
@@ -166,7 +167,7 @@ public class StudentDashboardView extends VerticalLayout {
         layout.getStyle().set("padding-bottom", "25px");
         layout.getStyle().set("border", "5px solid white");
         layout.getStyle().set("border-radius", "25px");
-        SimpleTimer timer = getRemainingTimerLayout(endTime);
+        SimpleTimer timer = TimerConstants.getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -176,33 +177,6 @@ public class StudentDashboardView extends VerticalLayout {
         layout.add(timer);
         return layout;
     }
-
-    private SimpleTimer getRemainingTimerLayout(Optional<LocalTime> t) {
-        // Calculate the remaining time and return it as a string
-//        // Define the target date and time
-//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 0, 0);
-
-        // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
-
-        // Define the target date and time
-        // Add 3 hours to the current time
-        LocalTime endTime = t.orElse(LocalTime.now());
-        LocalDateTime targetDateTime = LocalDate.now().atTime(endTime.getHour(), endTime.getMinute());
-
-
-
-        // Calculate the difference between the current and target date and time
-        long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);
-        long hours = ChronoUnit.HOURS.between(currentDateTime, targetDateTime);
-        long minutes = ChronoUnit.MINUTES.between(currentDateTime, targetDateTime);
-        long seconds = ChronoUnit.SECONDS.between(currentDateTime, targetDateTime);
-
-        // Return the remaining time as a string
-//        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
-        return new SimpleTimer(seconds);
-    }
-
     private void showOtpDialog() {
         dialog = new Dialog();
         dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");

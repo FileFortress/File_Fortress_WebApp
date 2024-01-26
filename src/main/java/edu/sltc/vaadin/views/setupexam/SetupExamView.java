@@ -27,22 +27,18 @@ import edu.sltc.vaadin.data.PasswordGenerator;
 import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.models.PasswordPool;
 import edu.sltc.vaadin.models.PublicKeyHolder;
-import edu.sltc.vaadin.services.EmailExtractor;
-import edu.sltc.vaadin.services.EmailSenderService;
-import edu.sltc.vaadin.services.FileEncryptionService;
+import edu.sltc.vaadin.services.*;
 import edu.sltc.vaadin.views.MainLayout;
-import jakarta.annotation.Nonnull;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -122,10 +118,16 @@ public class SetupExamView extends VerticalLayout {
             ExamModel.serverIsRunning = !ExamModel.serverIsRunning;
             if (ExamModel.serverIsRunning){
                 startServer();
+                CheckConnectedStudent.getInstance().StartTimerThread();
+                CheckSubmittedAnswers.getInstance().StartTimerThread();
                 startServer.setText("Stop Server");
                 startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
             }else{
                 examModel.resetInstance();
+                CheckConnectedStudent.getInstance().StopTimerThread();
+                CheckSubmittedAnswers.getInstance().StopTimerThread();
+                //remove access from Student with Server.
+                removeNewStudentsAccess();
                 startServer.setText("Start Server");
                 startServer.removeThemeVariants(ButtonVariant.LUMO_ERROR);
                 startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
@@ -146,6 +148,8 @@ public class SetupExamView extends VerticalLayout {
         // Execute JavaScript code when the view is attached to the UI
         UI.getCurrent().getPage().executeJs("uploadFile($0);uploadFile($1);","myVaadinUpload","myStudentUpload");
     }
+
+
 
     private static Upload getPaperUpload() {
         Button uploadPDF = new Button("Upload PDF");
@@ -238,8 +242,8 @@ public class SetupExamView extends VerticalLayout {
         examModel.setModuleName(moduleNameValue);
         examModel.setModuleDescription(moduleDescriptionValue);
         examModel.setLateSubmission(lateSubmissionValue);
-        examModel.setStartTime(startTimeValue);
-        examModel.setEndTime(endTimeValue);
+        examModel.setStartTime( LocalDateTime.of(LocalDate.now(),startTimeValue));
+        examModel.setEndTime(LocalDateTime.of(LocalDate.now(),endTimeValue));
 
         System.out.println(examModel);
         // Display success message or navigate to the student dashboard
@@ -256,20 +260,30 @@ public class SetupExamView extends VerticalLayout {
                 executorService.submit(() -> {
                     if (userDetailsManager.userExists(email)){
                         userDetailsManager.deleteUser(email);
-                        System.out.println("User exists");
                     }
                     senderService.sendEmail(email, "User Password", "Your User Password is " + password);
                     userDetailsManager.createUser(User.withUsername(email)
                             .password(new BCryptPasswordEncoder().encode(password))
                             .roles("USER")
                             .build());
-                    // Add user existence check and creation logic here if needed
-                    System.out.println("User Added");
-
                 });
             }
             executorService.shutdown();
-            System.out.println("All Users Added Successful");
+        }
+    }
+    private void removeNewStudentsAccess() {
+        List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
+        if (!emails.isEmpty()) {
+            ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
+            for (String email : emails) {executorService.submit(() -> {
+                    if (userDetailsManager.userExists(email)){
+                        userDetailsManager.deleteUser(email);
+                        System.out.println(email + " User Access removed from the Server!");
+                        //TODO: have to clear the session & reload student end to login
+                    }
+                });
+            }
+            executorService.shutdown();
         }
     }
 }

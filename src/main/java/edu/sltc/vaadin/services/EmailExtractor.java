@@ -26,23 +26,16 @@ public class EmailExtractor {
             while ((line = reader.readLine()) != null) {
                 Matcher matcher = emailPattern.matcher(line);
                 while (matcher.find()) {
-                    emails.add(matcher.group());
+                    if (checkStudentEmail(matcher.group()))
+                        emails.add(matcher.group());
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return emails;
     }
-
-    public static String getRoleForEmail(String email) {
-        if (email.endsWith("@sltc.ac.lk")) {
-            // You can customize the role based on your requirements
-            return "ROLE_USER";
-        } else {
-            // Return a default role or handle other cases as needed
-            return "ROLE_UNKNOWN";
-        }
+    private static boolean checkStudentEmail(String email){
+        return email.endsWith("@sltc.ac.lk");
     }
 }

@@ -19,7 +19,7 @@ import java.util.Set;
  * @package edu.sltc.vaadin.services
  * @project_Name File_Fortress_WebApp
  */
-@Service
+@Service(value = "-101")
 public class EmailSenderService {
     private final JavaMailSender javaMailSender;
     @Autowired

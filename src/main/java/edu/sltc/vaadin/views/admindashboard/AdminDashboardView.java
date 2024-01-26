@@ -13,19 +13,23 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
+import edu.sltc.vaadin.data.ConnectedStudentsListener;
 import edu.sltc.vaadin.data.OTPListener;
+import edu.sltc.vaadin.data.StudentsAnswerSubmissionListener;
 import edu.sltc.vaadin.data.WifiListener;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.services.CheckConnectedStudent;
+import edu.sltc.vaadin.services.CheckSubmittedAnswers;
 import edu.sltc.vaadin.services.CurrentWifiHandler;
 import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
+import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
+import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.session.SessionRegistry;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,9 +44,11 @@ public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;
     private TextField WifiTextField, ServerUrlTextField, JoinedStudentsTextField, submissionCountTextField;
     private UI ui;
-    private Timer timer, wifiTimer, otpTimer;
     private OTPListener otpListener;
     private WifiListener wifiListener;
+    private ConnectedStudentsListener connectedStudentsListener;
+    private StudentsAnswerSubmissionListener studentsAnswerSubmissionListener;
+    private SimpleTimer timer;
     public AdminDashboardView() {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -56,7 +62,7 @@ public class AdminDashboardView extends VerticalLayout {
         FormLayout formLayoutOne = new FormLayout();
         formLayoutOne.getElement().setAttribute("id", "my-top-form-layout");
         firstModule.add(formLayoutOne);
-        Div timer1 = createTimerLayout(examModel.getEndTime());
+        Div timer1 = createTimerLayout(examModel.getEndDateTime());
         formLayoutOne.add(timer1);
         formLayoutOne.setColspan(timer1, 1);
         Div otp1 = otpViewer();
@@ -77,7 +83,7 @@ public class AdminDashboardView extends VerticalLayout {
             new Timer(true).schedule(new TimerTask() {
                 @Override
                 public void run() {ui.access(()->{
-                    otp1.getComponentAt(1).getElement().getStyle().setColor("red");
+                   otp1.getComponentAt(1).getElement().getStyle().setColor("red");
                     // Push an empty update to trigger a background refresh
                     ui.push();
                 });}
@@ -85,6 +91,7 @@ public class AdminDashboardView extends VerticalLayout {
         };
         OTPGenerator.getInstance().addListener(otpListener);
         ui.getPage().executeJs("setContentView()");
+//        timer.getElement().getChild(0).setText("00:00:00");
         // -------------------------------------------------------------------------------------------------------------
         Div moduleDetails = new Div();
 //        moduleDetails.setMaxWidth("800px");
@@ -119,8 +126,21 @@ public class AdminDashboardView extends VerticalLayout {
 
         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
         ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
-        JoinedStudentsTextField.setValue("25");
-        submissionCountTextField.setValue("10");
+        JoinedStudentsTextField.setValue(CheckConnectedStudent.getStudentCount());
+        submissionCountTextField.setValue(CheckSubmittedAnswers.getAnswerCount());
+        connectedStudentsListener = studentCount->{
+            ui.access(()->{
+                JoinedStudentsTextField.setValue(studentCount);
+            });
+        };
+        CheckConnectedStudent.getInstance().addListener(connectedStudentsListener);
+        studentsAnswerSubmissionListener = answerCount->{
+            ui.access(()->{
+                submissionCountTextField.setValue(answerCount);
+            });
+        };
+        CheckSubmittedAnswers.getInstance().addListener(studentsAnswerSubmissionListener);
+
         wifiListener = (wifiSSID)->{
             ui.access(() ->{
                 WifiTextField.setValue(wifiSSID);
@@ -148,9 +168,9 @@ public class AdminDashboardView extends VerticalLayout {
         return layout;
     }
 
-    private Div createTimerLayout(Optional<LocalTime> endTime) {
+    private Div createTimerLayout(Optional<LocalDateTime> endTime) {
         Div layout = firstDivFlexbox();
-        SimpleTimer timer = getRemainingTimerLayout(endTime);
+        timer = TimerConstants.getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -171,44 +191,6 @@ public class AdminDashboardView extends VerticalLayout {
         layout.add(t1);
         return layout ;
     }
-    private SimpleTimer getRemainingTimerLayout(Optional<LocalTime> t) {
-        // Calculate the remaining time and return it as a string
-//        // Define the target date and time
-//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
-
-        // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
-
-        // Define the target date and time
-        // Add 3 hours to the current time
-        LocalTime endTime = t.orElse(LocalTime.now());
-        LocalDateTime targetDateTime = LocalDate.now().atTime(endTime.getHour(), endTime.getMinute());
-
-        // Calculate the difference between the current and target date and time
-        long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);
-        long hours = ChronoUnit.HOURS.between(currentDateTime, targetDateTime);
-        long minutes = ChronoUnit.MINUTES.between(currentDateTime, targetDateTime);
-        long seconds = ChronoUnit.SECONDS.between(currentDateTime, targetDateTime);
-
-        // Return the remaining time as a string
-//        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
-        return new SimpleTimer(seconds);
-    }
-    private void stopOtpTimer() {
-//            if (otpTimer != null) {
-//                otpTimer.cancel();
-//                otpTimer.purge();
-//            }
-        OTPGenerator.getInstance().removeListener(otpListener);
-    }
-    private void stopWifiTimer() {
-//        if (wifiTimer != null) {
-//            wifiTimer.cancel();
-//            wifiTimer.purge();
-//        }
-        CurrentWifiHandler.getInstance().removeListeners(wifiListener);
-    }
-
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui.getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
@@ -217,8 +199,10 @@ public class AdminDashboardView extends VerticalLayout {
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        stopOtpTimer();
-        stopWifiTimer();
+        OTPGenerator.getInstance().removeListener(otpListener);
+        CurrentWifiHandler.getInstance().removeListeners(wifiListener);
+        CheckConnectedStudent.getInstance().removeListener(connectedStudentsListener);
+        CheckSubmittedAnswers.getInstance().removeListener(studentsAnswerSubmissionListener);
         super.onDetach(detachEvent);
     }
 }
