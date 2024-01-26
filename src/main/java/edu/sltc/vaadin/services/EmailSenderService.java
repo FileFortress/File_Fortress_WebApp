@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.services;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -17,10 +19,13 @@ import java.util.Set;
  * @package edu.sltc.vaadin.services
  * @project_Name File_Fortress_WebApp
  */
-@Service
+@Service(value = "-101")
 public class EmailSenderService {
+    private final JavaMailSender javaMailSender;
     @Autowired
-    private JavaMailSender javaMailSender;
+    public EmailSenderService(JavaMailSender javaMailSender) {
+        this.javaMailSender = javaMailSender;
+    }
 
     public void sendEmail(String toEmail, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -43,6 +48,4 @@ public class EmailSenderService {
         }
         System.out.println("Mails Sending Successful!!");
     }
-
-
 }

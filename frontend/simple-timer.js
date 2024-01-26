@@ -118,6 +118,7 @@ Polymer({
           this.set('currentTime', this.startTime);
           this.set('_formattedTime', this.startTime.toString());
         }
+        this._formattedTime = this._formatTime(this.currentTime);
       },
 
       start: function() {

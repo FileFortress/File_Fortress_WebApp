@@ -1,12 +1,13 @@
 package edu.sltc.vaadin.views.studentdashboard;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -17,17 +18,18 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.models.ExamModel;
+import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
+import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.logging.Logger;
+import java.util.Optional;
 
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
@@ -35,26 +37,30 @@ import java.util.logging.Logger;
 @RolesAllowed("USER")
 @JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
-    private TextField otpField;
-    private final int otp = 2045;
+    //    private TextField otpField;
+//    private final int otp = 2045;
     private Dialog dialog;
 
     public StudentDashboardView() {
         setSpacing(false);
         // Obtain the ExamModel instance
         ExamModel examModel = ExamModel.getInstance();
-        if (examModel.getExamPaperName() != null){
+
+        examModel.getExamPaperName().ifPresent((s)->{
+            System.out.println("Paper Name : " + s);
+        });
+        if (ExamModel.serverIsRunning){
             /*
              * module name
              */
-            H1 header_one = new H1(examModel.getModuleName());
+            H1 header_one = new H1(examModel.getModuleName().orElse(""));
             header_one.addClassNames(LumoUtility.Margin.Top.MEDIUM, LumoUtility.Margin.Bottom.XSMALL);
             header_one.setWidthFull();
             add(header_one);
             /*
              * module code
              */
-            H2 header_two = new H2(examModel.getModuleCode());
+            H2 header_two = new H2(examModel.getModuleCode().orElse(" "));
             header_two.addClassNames(LumoUtility.Margin.Top.XSMALL, LumoUtility.Margin.Bottom.MEDIUM);
             header_two.setWidthFull();
             add(header_two);
@@ -68,31 +74,20 @@ public class StudentDashboardView extends VerticalLayout {
             formLayout.setMaxWidth("600px");
             moduleDetails.add(formLayout);
 
-//            /*
-//             * start time
-//             */
-//            Span start_time = new Span("Start Time : " + examModel.getStartTime());
-//            formLayout.add(start_time);
-//
-//            /*
-//             * end time
-//             */
-//            Span end_time = new Span("End Time : " + examModel.getEndTime());
-//            formLayout.add(end_time);
             // Inline "Start Time" and "End Time" components
             HorizontalLayout timeLayout = new HorizontalLayout();
             timeLayout.setAlignItems(Alignment.CENTER); // Align items vertically
             timeLayout.setWidthFull(); //set full width of component
 
             // Start time
-            Span start_time = new Span("Start Time: " + examModel.getStartTime());
+            Span start_time = new Span("Start Time: " + examModel.getStartTime().orElse(null));
             timeLayout.add(start_time);
 
             // Spacer
             timeLayout.add(new HorizontalLayout(new Span(" "))); // Add a spacer
 
             // End time
-            Span end_time = new Span("End Time: " + examModel.getEndTime());
+            Span end_time = new Span("End Time: " + examModel.getEndTime().orElse(null));
             timeLayout.add(end_time);
 
             // Add the time layout to the form layout
@@ -101,10 +96,10 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Timer
              */
-            Div remainingTimeDiv = new Div();
+//          Div remainingTimeDiv = new Div();
             H2 remainingTime = new H2("Remaining Time");
             add(remainingTime);
-            add(createTimerLayout());
+            add(createTimerLayout(examModel.getEndDateTime()));
 
             /*
              * Exam Instructions
@@ -112,7 +107,7 @@ public class StudentDashboardView extends VerticalLayout {
             TextArea examInstructions = new TextArea("Exam Instructions");
             examInstructions.setHeight("500px");
             examInstructions.setMaxWidth("1000px");
-            examInstructions.setValue(examModel.getModuleDescription());
+            examInstructions.setValue(examModel.getModuleDescription().orElse(""));
             examInstructions.setReadOnly(true);
             examInstructions.setWidthFull();
             add(examInstructions);
@@ -123,7 +118,9 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Late Submission
              */
-            Span Late_submission = new Span("No Late Submission Allowed");
+
+            String lateSubmission = examModel.getLateSubmission().orElse("NO");
+            Span Late_submission = new Span(lateSubmission + " Late Submission Allowed");
             Late_submission.addClassNames(LumoUtility.Margin.Top.MEDIUM);
             add(Late_submission);
             formLayout.setColspan(Late_submission, 2);
@@ -131,22 +128,21 @@ public class StudentDashboardView extends VerticalLayout {
             /*
              * Download Button
              */
-            StreamResource streamResource = new StreamResource("examFile_nuyunpabasara457@gmail.com.pdf",
+            String examFileName = ExamModel.getInstance().getExamPaperName().orElseGet(()->"");
+            StreamResource streamResource = new StreamResource(examFileName,
                     () -> {
                         try {
-                            return new FileInputStream("src/main/resources/examFile_nuyunpabasara457@gmail.com.pdf");
+                            return new FileInputStream("Uploads/" + examFileName);
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);
                         }
                     });
-            System.out.println("Resource Name: "+streamResource.getName());
             Anchor downloadLink = new Anchor(streamResource, "" );
             downloadLink.getElement().setAttribute("download", true);
             downloadLink.getElement().getStyle().set("display", "none");
             Button downloadBtn = new Button("Download Paper");
             downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
             add(downloadBtn, downloadLink);
-
 
         } else {
             H2 errorHeader = new H2("Please Wait Until Exam paper is Uploaded");
@@ -159,18 +155,7 @@ public class StudentDashboardView extends VerticalLayout {
         getStyle().set("text-align", "center");
     }
 
-//    private InputStream getFileInputStream(String mail) {
-//        FileInputStream stream = null;
-//        try {
-//            stream = new FileInputStream(file);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return stream;
-//    }
-
-    private Div createTimerLayout() {
+    private Div createTimerLayout(Optional<LocalDateTime> endTime) {
         Div layout = new Div();
         layout.getStyle().set("font-size", "30px");
         layout.getStyle().set("color", "#333");
@@ -182,7 +167,7 @@ public class StudentDashboardView extends VerticalLayout {
         layout.getStyle().set("padding-bottom", "25px");
         layout.getStyle().set("border", "5px solid white");
         layout.getStyle().set("border-radius", "25px");
-        SimpleTimer timer = getRemainingTimerLayout();
+        SimpleTimer timer = TimerConstants.getRemainingTimerLayout(endTime);
         timer.getStyle().setColor("white");
         timer.setFractions(false);
         timer.setHours(true);
@@ -192,31 +177,6 @@ public class StudentDashboardView extends VerticalLayout {
         layout.add(timer);
         return layout;
     }
-
-    private SimpleTimer getRemainingTimerLayout() {
-        // Calculate the remaining time and return it as a string
-//        // Define the target date and time
-//        LocalDateTime targetDateTime = LocalDateTime.of(2023, 10, 31, 23, 30);
-
-        // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
-
-        // Define the target date and time
-        // Add 3 hours to the current time
-        LocalDateTime targetDateTime = currentDateTime.plusHours(3);
-
-
-        // Calculate the difference between the current and target date and time
-        long days = ChronoUnit.DAYS.between(currentDateTime, targetDateTime);
-        long hours = ChronoUnit.HOURS.between(currentDateTime, targetDateTime);
-        long minutes = ChronoUnit.MINUTES.between(currentDateTime, targetDateTime);
-        long seconds = ChronoUnit.SECONDS.between(currentDateTime, targetDateTime);
-
-        // Return the remaining time as a string
-//        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
-        return new SimpleTimer(seconds);
-    }
-
     private void showOtpDialog() {
         dialog = new Dialog();
         dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");
@@ -235,7 +195,7 @@ public class StudentDashboardView extends VerticalLayout {
                 .set("font-size", "1.5em").set("font-weight", "bold");
 
         // Add an OTP input field
-        otpField = new TextField("OTP");
+        TextField otpField = new TextField("OTP");
         VerticalLayout fieldLayout = new VerticalLayout(otpField);
         fieldLayout.setSpacing(false);
         fieldLayout.setPadding(false);
@@ -245,27 +205,39 @@ public class StudentDashboardView extends VerticalLayout {
         dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
         dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
         // Add "Login" button to the dialog
-        Button loginButton = new Button("Login", e -> {
+        Button loginButton = new Button("Submit", e -> {
             // Perform login action here
-            performLogin();
+            performLogin(otpField);
         });
+        loginButton.addClickShortcut(Key.ENTER);
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialogLayout.add(loginButton);
 
         return dialogLayout;
     }
 
-    private void performLogin() {
+    private void performLogin(TextField otpField) {
         // Implement your login logic here
         // Check OTP and proceed with login
-        int enteredOtp = Integer.parseInt(otpField.getValue());
-        if (enteredOtp == otp) {
-            // Continue with login logic
-            dialog.close();
-        } else {
-            // Display an error message for incorrect OTP
-            otpField.setErrorMessage("Enter Valid OTP!");
+        try {
+            int enteredOtp = Integer.parseInt(otpField.getValue());
+            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
+                // Continue with login logic
+                dialog.close();
+            } else {
+                // Display an error message for incorrect OTP
+                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+            }
+        } catch (NumberFormatException e){
+            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+        } catch (Exception e){
+            e.getMessage();
         }
+        otpField.focus();
     }
 
 }

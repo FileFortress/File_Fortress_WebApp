@@ -1,5 +1,7 @@
 package edu.sltc.vaadin.models;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Set;
 
 /**

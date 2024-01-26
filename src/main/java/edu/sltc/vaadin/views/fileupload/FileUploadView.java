@@ -1,12 +1,15 @@
 package edu.sltc.vaadin.views.fileupload;
 
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -15,23 +18,34 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.models.PublicKeyHolder;
+import edu.sltc.vaadin.services.CheckSubmittedAnswers;
+import edu.sltc.vaadin.services.FileEncryptionService;
+import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.views.MainLayout;
-import edu.sltc.vaadin.views.setupexam.FileReceiver;
-import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
+import java.util.HashSet;
+import java.util.Set;
 
 
 @PageTitle("File Upload")
 @Route(value = "file_transfer", layout = MainLayout.class)
 @RolesAllowed("USER")
+@JsModule("./fileUploader.js")
 public class FileUploadView extends HorizontalLayout {
 
     private TextField otpField;
-    private final int otp = 2045;
     private Dialog dialog;
+    private final MemoryBuffer memoryBuffer = new MemoryBuffer();
+    private String answerPaperName;
+    private static final Set<String> answerSubmittedEmailSet = new HashSet<>();
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
@@ -44,46 +58,68 @@ public class FileUploadView extends HorizontalLayout {
         upload.setMinHeight("330px");
 
         /*
-        * checkBox Component
-        */
+         * checkBox Component
+         */
         Checkbox answerValidationCheckBox = new Checkbox();
         answerValidationCheckBox.setLabel("I Acknowledged that these submission is honest work from me");
         answerValidationCheckBox.getStyle().setMargin("20px");
 
         /*
-        * Button component
-        */
+         * Button component
+         */
         Button submitButton = new Button("Submit");
+        submitButton.setId("SubmitButton");
         submitButton.setTooltipText("Submit Button");
+        submitButton.addClickListener(new ComponentEventListener<ClickEvent<Button>>() {
+            @Override
+            public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+                if (answerValidationCheckBox.getValue()){
+                    if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                        FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + answerPaperName, GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                        CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
+                    }
+                    Notification notification = Notification
+                            .show(answerPaperName + " File Uploaded with Success!");
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notification.setPosition(Notification.Position.BOTTOM_END);
+                    notification.setDuration(2500);
+                }else {
+                    Notification notification = new Notification("Please make sure You have Check the Acknowledge.", 2000, Notification.Position.BOTTOM_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
+                }
+            }
+        });
         submitButton.setWidthFull();
         layout.add(upload,answerValidationCheckBox,submitButton);
         add(layout);
         showOtpDialog();
+        // Execute JavaScript code when the view is attached to the UI
+        UI.getCurrent().getPage().executeJs("uploadFile($0)","myVaadinUpload");
     }
 
-    private static Upload getUpload() {
+    private Upload getUpload() {
 
         Button uploadPDF = new Button("Upload PDF");
         uploadPDF.setTooltipText("You Can Select PDF file from here or You can Drag & Drop PDF FIle Directly");
         Upload upload = new Upload();
+        upload.setId("myVaadinUpload");
         // Define the file receiver that will handle the file upload
-        upload.setReceiver(new FileReceiver());
+        upload.setReceiver(memoryBuffer);
         // Define the accepted file types. In this case, only PDF files are accepted.
         upload.setAcceptedFileTypes("application/pdf");
         Span dropLabel = new Span("Upload Answer Paper");
-//        uploadPDF.getStyle().set("left","50%");
-//        uploadPDF.getStyle().set("top","50%");
         upload.setDropLabel(dropLabel);
         upload.setUploadButton(uploadPDF);
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addFinishedListener(event -> {
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
-            Notification notification = Notification
-                    .show(event.getFileName()+" File uploaded successfully!");
-            notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            answerPaperName = event.getFileName();
+            Notification notification = Notification.show(answerPaperName + " File Added To Waiting List!");
+            notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
             notification.setPosition(Notification.Position.BOTTOM_END);
-            notification.setDuration(2500);
+            notification.setDuration(1500);
         });
         return upload;
     }
@@ -115,10 +151,11 @@ public class FileUploadView extends HorizontalLayout {
         dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
         dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
         // Add "Login" button to the dialog
-        Button loginButton = new Button("Login", e -> {
+        Button loginButton = new Button("Submit", e -> {
             // Perform login action here
             performLogin();
         });
+        loginButton.addClickShortcut(Key.ENTER);
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialogLayout.add(loginButton);
 
@@ -130,16 +167,24 @@ public class FileUploadView extends HorizontalLayout {
         // Check OTP and proceed with login
         try {
             int enteredOtp = Integer.parseInt(otpField.getValue());
-            if (enteredOtp == otp) {
+            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
                 // Continue with login logic
                 dialog.close();
             } else {
                 // Display an error message for incorrect OTP
-                otpField.setErrorMessage("Enter Valid OTP!");
+                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
             }
         }catch (NumberFormatException e){
-            otpField.setErrorMessage("Enter Valid OTP!");
+            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+        } catch (Exception e){
+            e.getMessage();
         }
-
+        otpField.focus();
     }
+
+
 }

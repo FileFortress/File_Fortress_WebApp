@@ -1,11 +1,10 @@
 
 // File Uploader
-window.uploadFile = function uploadFile(){
+window.uploadFile = function uploadFile(id){
     console.log('JS part Executed');
     // window.document.getElementById('myVaadinUpload').setAttribute('target', 'http://localhost:4444/fortress/file_upload');
     // const target = window.document.getElementById('myVaadinUpload').getAttribute('target');
-
-    const upload = window.document.getElementById('myVaadinUpload');
+    const upload = window.document.getElementById(id);
     upload.addEventListener('upload-request', function(event) {
         event.preventDefault();
         console.log('File selected:', event.detail.file.name);
@@ -14,10 +13,10 @@ window.uploadFile = function uploadFile(){
         // encrypt the file here and send the encrypted one to the server.
         // shared secret AES-GCM /256 key
 
-
         // Encrypt the file using the shared secret key
         encryptFile(event.detail.file, sessionStorage.getItem("sharedSecret"))
             .then(encryptedFile => {
+                window.key.sendClientPublic(sessionStorage.getItem("clientPublic"));
                 const encryptedBlob = new Blob([encryptedFile], { type: event.detail.file.type });
 
                 // Create a new FormData and append the encrypted file
