@@ -17,25 +17,16 @@ import java.util.Optional;
 public class TimerConstants {
 
     public static SimpleTimer getRemainingTimerLayout(Optional<LocalDateTime> dateTime) {
-        // Calculate the remaining time and return it as a string
         // Get the current date and time
         LocalDateTime currentDateTime = LocalDateTime.now();
-
         if (dateTime.isPresent()){
-//            System.out.println(dateTime.get());
             // Calculate the difference between the current and target date and time
             long seconds = ChronoUnit.SECONDS.between(currentDateTime, dateTime.get());
-//            System.out.println("seconds : "+seconds);
             if (seconds <= 0){
-                Notification notification = new Notification("     Exam Time is Over!!    ", 2500, Notification.Position.TOP_CENTER);
-                notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
-                notification.open();
                 return new SimpleTimer(0);
             }
             return new SimpleTimer(seconds);
         }
         return new SimpleTimer(0);
-        // Return the remaining time as a string
-//        return String.format("%02d",hours%24) + " " + String.format("%02d",seconds%60+1) ;
     }
 }
