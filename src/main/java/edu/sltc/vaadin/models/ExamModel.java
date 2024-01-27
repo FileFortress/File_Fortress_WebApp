@@ -117,7 +117,7 @@ public class ExamModel {
     public void resetInstance(){
         instance = new ExamModel();
     }
-    private Optional<Integer> getLateSubmissionValue() {
+    public Optional<Integer> getLateSubmissionValue() {
         if (lateSubmission != null) {
             return switch (lateSubmission) {
                 case "10 Minutes" -> Optional.of(10);
@@ -131,7 +131,6 @@ public class ExamModel {
             return Optional.empty();
         }
     }
-
 
     @Override
     public String toString() {

@@ -14,6 +14,7 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinServletRequest;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
@@ -207,6 +208,7 @@ public class MainLayout extends AppLayout {
                 // Check if the user has the role ROLE_USER
                 if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
                     // If the user has the role ROLE_USER, return the email
+                    VaadinSession.getCurrent().setAttribute("role", "STUDENT");
                     connectedEmails.add(userDetails.getUsername());
                     CheckConnectedStudent.getInstance().addStudentEmail(userDetails.getUsername());
                 }

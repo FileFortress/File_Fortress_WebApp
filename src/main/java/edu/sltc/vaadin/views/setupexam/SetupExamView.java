@@ -21,6 +21,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.data.PasswordGenerator;
@@ -39,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,17 +53,20 @@ import java.util.concurrent.Executors;
 public class SetupExamView extends VerticalLayout {
 
     private final EmailSenderService senderService;
-
+    //    private final UserSessionListener userSessionListener;
+    private final SessionHolder sessionHolder;
     private final InMemoryUserDetailsManager userDetailsManager;
     private TextField moduleCode, moduleName;
-    private TextArea moduleDescription, studentEmailList;
+    private TextArea moduleDescription;
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
 
-    public SetupExamView(EmailSenderService senderService, InMemoryUserDetailsManager userDetailsManager) {
+    public SetupExamView(EmailSenderService senderService, InMemoryUserDetailsManager userDetailsManager, SessionHolder sessionHolder) {
         this.senderService = senderService;
         this.userDetailsManager = userDetailsManager;
+        this.sessionHolder = sessionHolder;
+//        this.userSessionListener = userSessionListener;
         setSpacing(false);
         ExamModel examModel = ExamModel.getInstance(); // Get the ExamModel instance
         H2 header = new H2("Exam Paper Registration");
@@ -148,8 +153,6 @@ public class SetupExamView extends VerticalLayout {
         // Execute JavaScript code when the view is attached to the UI
         UI.getCurrent().getPage().executeJs("uploadFile($0);uploadFile($1);","myVaadinUpload","myStudentUpload");
     }
-
-
 
     private static Upload getPaperUpload() {
         Button uploadPDF = new Button("Upload PDF");
@@ -261,11 +264,13 @@ public class SetupExamView extends VerticalLayout {
                     if (userDetailsManager.userExists(email)){
                         userDetailsManager.deleteUser(email);
                     }
-                    senderService.sendEmail(email, "User Password", "Your User Password is " + password);
-                    userDetailsManager.createUser(User.withUsername(email)
-                            .password(new BCryptPasswordEncoder().encode(password))
-                            .roles("USER")
-                            .build());
+                    if (ExamModel.serverIsRunning) {
+                        senderService.sendEmail(email, "User Password", "Your User Password is " + password);
+                        userDetailsManager.createUser(User.withUsername(email)
+                                .password(new BCryptPasswordEncoder().encode(password))
+                                .roles("USER")
+                                .build());
+                    }
                 });
             }
             executorService.shutdown();
@@ -274,16 +279,43 @@ public class SetupExamView extends VerticalLayout {
     private void removeNewStudentsAccess() {
         List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
         if (!emails.isEmpty()) {
+
+//            Set<VaadinSession> connectedSessions = userSessionListener.getConnectedSessions();
+//            System.out.println("ConnectedSessions : " + connectedSessions.size());
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             for (String email : emails) {executorService.submit(() -> {
-                    if (userDetailsManager.userExists(email)){
-                        userDetailsManager.deleteUser(email);
-                        System.out.println(email + " User Access removed from the Server!");
-                        //TODO: have to clear the session & reload student end to login
-                    }
-                });
+                if (userDetailsManager.userExists(email)){
+                    userDetailsManager.deleteUser(email);
+                    System.out.println(email + " User Access removed from the Server!");
+                }
+            });
             }
             executorService.shutdown();
+            //clear the Student's session & reload student to Login Again
+            Map<String, List<VaadinSession>> userSessionMap =  sessionHolder.getActiveSessionsForUsernames(emails);
+            System.out.println("Map : " + userSessionMap);
+            for (List<VaadinSession> vaadinSessionList : userSessionMap.values()) {
+                System.out.println("List :" + vaadinSessionList);
+                for (VaadinSession vaadinSession : vaadinSessionList) {
+                    vaadinSession.lock();
+                    vaadinSession.getSession().invalidate();
+//                    vaadinSession.close();
+                    // Unlock it after invalidating session
+                    vaadinSession.unlock();
+                }
+            }
+
+//            for (VaadinSession vaadinSession : connectedSessions) {
+//                // Lock the current accessing session
+//                vaadinSession.lock();
+//                System.out.println(vaadinSession.getAttribute("role").toString());
+//                if (vaadinSession.getAttribute("role").toString().equals("STUDENT")){
+//                    vaadinSession.getSession().invalidate();
+//                    vaadinSession.close();
+//                }
+//                // Unlock it after invalidating session
+//                vaadinSession.unlock();
+//            }
         }
     }
 }

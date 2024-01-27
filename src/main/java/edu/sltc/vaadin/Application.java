@@ -45,5 +45,4 @@ public class Application implements AppShellConfigurator {
     public void sendEmailsToAdmins(){
         senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service", passwordPool.getAdminPasswords());
     }
-
 }
