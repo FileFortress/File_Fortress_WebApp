@@ -21,6 +21,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.data.PasswordGenerator;
@@ -39,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,17 +53,20 @@ import java.util.concurrent.Executors;
 public class SetupExamView extends VerticalLayout {
 
     private final EmailSenderService senderService;
-
+    //    private final UserSessionListener userSessionListener;
+    private final SessionHolder sessionHolder;
     private final InMemoryUserDetailsManager userDetailsManager;
     private TextField moduleCode, moduleName;
-    private TextArea moduleDescription, studentEmailList;
+    private TextArea moduleDescription;
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
 
-    public SetupExamView(EmailSenderService senderService, InMemoryUserDetailsManager userDetailsManager) {
+    public SetupExamView(EmailSenderService senderService, InMemoryUserDetailsManager userDetailsManager, SessionHolder sessionHolder) {
         this.senderService = senderService;
         this.userDetailsManager = userDetailsManager;
+        this.sessionHolder = sessionHolder;
+//        this.userSessionListener = userSessionListener;
         setSpacing(false);
         ExamModel examModel = ExamModel.getInstance(); // Get the ExamModel instance
         H2 header = new H2("Exam Paper Registration");
@@ -78,17 +83,21 @@ public class SetupExamView extends VerticalLayout {
         moduleDetails.add(formLayout);
 
         moduleCode = new TextField("Module Code");
+        moduleCode.setTooltipText("Enter the Module Code of the examination");
         formLayout.add(moduleCode);
 
         moduleName = new TextField("Module Name");
+        moduleName.setTooltipText("Enter the Name of the examination");
         formLayout.add(moduleName);
 
         moduleDescription = new TextArea("Module Description");
+        moduleDescription.setTooltipText("Enter the Instructions that student have to followed through the examination");
         moduleDescription.setHeight("100px");
         formLayout.add(moduleDescription);
         formLayout.setColspan(moduleDescription, 2);
 
         lateSubmission =  new RadioButtonGroup<>();
+        lateSubmission.setTooltipText("Set the Extra time to answer submission to the examination, If Needed");
         lateSubmission.setLabel("Late Submission");
         lateSubmission.setItems("NO", "10 Minutes", "15 Minutes", "20 Minutes", "25 Minutes","30 Minutes");
         lateSubmission.setValue("NO");
@@ -96,7 +105,9 @@ public class SetupExamView extends VerticalLayout {
         formLayout.setColspan(lateSubmission, 2);
 
         startTimePicker = new TimePicker("Start Time");
+        startTimePicker.setTooltipText("Enter the Start Time of the examination");
         endTimePicker = new TimePicker("End Time");
+        endTimePicker.setTooltipText("Enter the End Time of the examination");
         endTimePicker.addClassNames(Margin.Top.SMALL, Margin.Bottom.SMALL);
         formLayout.add(startTimePicker, endTimePicker);
 
@@ -112,6 +123,7 @@ public class SetupExamView extends VerticalLayout {
 
         // Set ExamModel data to the view
         startServer = new Button("Start Server");
+        startServer.setTooltipText("Start the examination and send mails to students");
         startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
         startServer.addClickListener(e -> {
@@ -148,8 +160,6 @@ public class SetupExamView extends VerticalLayout {
         // Execute JavaScript code when the view is attached to the UI
         UI.getCurrent().getPage().executeJs("uploadFile($0);uploadFile($1);","myVaadinUpload","myStudentUpload");
     }
-
-
 
     private static Upload getPaperUpload() {
         Button uploadPDF = new Button("Upload PDF");
@@ -250,7 +260,7 @@ public class SetupExamView extends VerticalLayout {
         Notification.show("Exam details saved successfully!");
 
         //give access to students and have to add user to InMemoryUserDetailsManager
-        List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
+        List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         PasswordPool.getInstance().setStudentPasswords(PasswordGenerator.bulkPasswordForStudents(emails.size(),10));
         if (!emails.isEmpty()) {
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
@@ -261,29 +271,46 @@ public class SetupExamView extends VerticalLayout {
                     if (userDetailsManager.userExists(email)){
                         userDetailsManager.deleteUser(email);
                     }
-                    senderService.sendEmail(email, "User Password", "Your User Password is " + password);
-                    userDetailsManager.createUser(User.withUsername(email)
-                            .password(new BCryptPasswordEncoder().encode(password))
-                            .roles("USER")
-                            .build());
+                    if (ExamModel.serverIsRunning) {
+                        senderService.sendEmail(email, "User Password", "Your User Password is " + password);
+                        userDetailsManager.createUser(User.withUsername(email)
+                                .password(new BCryptPasswordEncoder().encode(password))
+                                .roles("USER")
+                                .build());
+                    }
                 });
             }
             executorService.shutdown();
         }
     }
     private void removeNewStudentsAccess() {
-        List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
+        List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         if (!emails.isEmpty()) {
+
+//            Set<VaadinSession> connectedSessions = userSessionListener.getConnectedSessions();
+//            System.out.println("ConnectedSessions : " + connectedSessions.size());
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             for (String email : emails) {executorService.submit(() -> {
-                    if (userDetailsManager.userExists(email)){
-                        userDetailsManager.deleteUser(email);
-                        System.out.println(email + " User Access removed from the Server!");
-                        //TODO: have to clear the session & reload student end to login
-                    }
-                });
+                if (userDetailsManager.userExists(email)){
+                    userDetailsManager.deleteUser(email);
+                    System.out.println(email + " User Access removed from the Server!");
+                }
+            });
             }
             executorService.shutdown();
+            //clear the Student's session & reload student to Login Again
+            Map<String, List<VaadinSession>> userSessionMap =  sessionHolder.getActiveSessionsForUsernames(emails);
+            System.out.println("Map : " + userSessionMap);
+            for (List<VaadinSession> vaadinSessionList : userSessionMap.values()) {
+                System.out.println("List :" + vaadinSessionList);
+                for (VaadinSession vaadinSession : vaadinSessionList) {
+                    vaadinSession.lock();
+                    vaadinSession.getSession().invalidate();
+//                    vaadinSession.close();
+                    // Unlock it after invalidating session
+                    vaadinSession.unlock();
+                }
+            }
         }
     }
 }

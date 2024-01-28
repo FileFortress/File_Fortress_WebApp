@@ -31,24 +31,18 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
+import static edu.sltc.vaadin.services.OTPUIService.showOtpDialog;
+
 @PageTitle("Student Dashboard")
 @Route(value = "student_dashboard", layout = MainLayout.class)
 //@RouteAlias(value = "", layout = MainLayout.class)
 @RolesAllowed("USER")
 @JsModule("./clientDecrypt.js")
 public class StudentDashboardView extends VerticalLayout {
-    //    private TextField otpField;
-//    private final int otp = 2045;
-    private Dialog dialog;
-
     public StudentDashboardView() {
         setSpacing(false);
         // Obtain the ExamModel instance
         ExamModel examModel = ExamModel.getInstance();
-
-        examModel.getExamPaperName().ifPresent((s)->{
-            System.out.println("Paper Name : " + s);
-        });
         if (ExamModel.serverIsRunning){
             /*
              * module name
@@ -105,6 +99,7 @@ public class StudentDashboardView extends VerticalLayout {
              * Exam Instructions
              */
             TextArea examInstructions = new TextArea("Exam Instructions");
+            examInstructions.setTooltipText("Display the Instructions that you have to followed through the examination");
             examInstructions.setHeight("500px");
             examInstructions.setMaxWidth("1000px");
             examInstructions.setValue(examModel.getModuleDescription().orElse(""));
@@ -140,8 +135,7 @@ public class StudentDashboardView extends VerticalLayout {
             Anchor downloadLink = new Anchor(streamResource, "" );
             downloadLink.getElement().setAttribute("download", true);
             downloadLink.getElement().getStyle().set("display", "none");
-            Button downloadBtn = new Button("Download Paper");
-            downloadBtn.addClickListener(event -> downloadLink.getElement().callJsFunction("click"));
+            Button downloadBtn = getDownloadBtn(downloadLink);
             add(downloadBtn, downloadLink);
 
         } else {
@@ -153,6 +147,23 @@ public class StudentDashboardView extends VerticalLayout {
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         getStyle().set("text-align", "center");
+    }
+
+    private static Button getDownloadBtn(Anchor downloadLink) {
+        Button downloadBtn = new Button("Download Paper");
+        downloadBtn.setTooltipText("You can Download the Exam Paper Here");
+        downloadBtn.getStyle().setMargin("35px");
+        downloadBtn.addClickListener(event -> {
+            if (ExamModel.serverIsRunning && ExamModel.getInstance().getStartTime().orElse(LocalTime.MAX).isBefore(LocalTime.now()))
+                downloadLink.getElement().callJsFunction("click");
+            else {
+                Notification notification = new Notification("Please Wait Until Exam is Started", 2000, Notification.Position.BOTTOM_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+                notification.open();
+            }
+        }
+        );
+        return downloadBtn;
     }
 
     private Div createTimerLayout(Optional<LocalDateTime> endTime) {
@@ -177,67 +188,4 @@ public class StudentDashboardView extends VerticalLayout {
         layout.add(timer);
         return layout;
     }
-    private void showOtpDialog() {
-        dialog = new Dialog();
-        dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");
-        // Create dialog layout
-        VerticalLayout dialogLayout = createDialogLayout();
-        dialog.add(dialogLayout);
-        dialog.setCloseOnOutsideClick(false);
-        dialog.setCloseOnEsc(false);
-        // Show the dialog
-        dialog.open();
-    }
-
-    private VerticalLayout createDialogLayout() {
-        H2 headline = new H2("Enter Exam OTP");
-        headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
-                .set("font-size", "1.5em").set("font-weight", "bold");
-
-        // Add an OTP input field
-        TextField otpField = new TextField("OTP");
-        VerticalLayout fieldLayout = new VerticalLayout(otpField);
-        fieldLayout.setSpacing(false);
-        fieldLayout.setPadding(false);
-        fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout);
-        dialogLayout.setPadding(false);
-        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
-        // Add "Login" button to the dialog
-        Button loginButton = new Button("Submit", e -> {
-            // Perform login action here
-            performLogin(otpField);
-        });
-        loginButton.addClickShortcut(Key.ENTER);
-        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        dialogLayout.add(loginButton);
-
-        return dialogLayout;
-    }
-
-    private void performLogin(TextField otpField) {
-        // Implement your login logic here
-        // Check OTP and proceed with login
-        try {
-            int enteredOtp = Integer.parseInt(otpField.getValue());
-            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
-                // Continue with login logic
-                dialog.close();
-            } else {
-                // Display an error message for incorrect OTP
-                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
-                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                notification.open();
-            }
-        } catch (NumberFormatException e){
-            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            notification.open();
-        } catch (Exception e){
-            e.getMessage();
-        }
-        otpField.focus();
-    }
-
 }

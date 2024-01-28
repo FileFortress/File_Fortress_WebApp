@@ -22,6 +22,7 @@ import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.models.ExamModel;
 import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.services.CheckSubmittedAnswers;
 import edu.sltc.vaadin.services.FileEncryptionService;
@@ -31,8 +32,11 @@ import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
+
+import static edu.sltc.vaadin.services.OTPUIService.showOtpDialog;
 
 
 @PageTitle("File Upload")
@@ -40,58 +44,74 @@ import java.util.Set;
 @RolesAllowed("USER")
 @JsModule("./fileUploader.js")
 public class FileUploadView extends HorizontalLayout {
-
-    private TextField otpField;
-    private Dialog dialog;
     private final MemoryBuffer memoryBuffer = new MemoryBuffer();
     private String answerPaperName;
-    private static final Set<String> answerSubmittedEmailSet = new HashSet<>();
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
-        layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        Upload upload = getUpload();
-        upload.setWidthFull();
-        upload.getStyle().set("display","flex");
-        upload.getStyle().set("justify-content","center");
-        upload.getStyle().set("align-items","center");
-        upload.setMinHeight("330px");
+        if (ExamModel.serverIsRunning && ExamModel.getInstance().getStartTime().orElse(LocalTime.MAX).isBefore(LocalTime.now())){
+            layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        /*
-         * checkBox Component
-         */
-        Checkbox answerValidationCheckBox = new Checkbox();
-        answerValidationCheckBox.setLabel("I Acknowledged that these submission is honest work from me");
-        answerValidationCheckBox.getStyle().setMargin("20px");
+            Upload upload = getUpload();
+            upload.setWidthFull();
+            upload.getStyle().set("display","flex");
+            upload.getStyle().set("justify-content","center");
+            upload.getStyle().set("align-items","center");
+            upload.setMinHeight("330px");
 
-        /*
-         * Button component
-         */
-        Button submitButton = new Button("Submit");
-        submitButton.setId("SubmitButton");
-        submitButton.setTooltipText("Submit Button");
-        submitButton.addClickListener(new ComponentEventListener<ClickEvent<Button>>() {
-            @Override
-            public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-                if (answerValidationCheckBox.getValue()){
-                    if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                        FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + answerPaperName, GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
-                        CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
+            /*
+             * checkBox Component
+             */
+            Checkbox answerValidationCheckBox = new Checkbox();
+            answerValidationCheckBox.setLabel("I Acknowledged that these submission is honest work from me");
+            answerValidationCheckBox.getStyle().setMargin("20px");
+
+            /*
+             * Button component
+             */
+            Button submitButton = new Button("Submit");
+            submitButton.setId("SubmitButton");
+            submitButton.setTooltipText("Submit Button");
+            submitButton.addClickListener(new ComponentEventListener<ClickEvent<Button>>() {
+                @Override
+                public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+                    if (answerValidationCheckBox.getValue() && isSubmissionOnTime() && memoryBuffer.getInputStream() != null){
+                        if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
+                            FileEncryptionService.decryptFile(memoryBuffer.getInputStream(),
+                                    "Uploads/answers/"+user.getUsername().split("@")[0]+"_"+ExamModel.getInstance().getModuleCode()+".pdf",
+                                    GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+
+                            CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
+                        }
+                        Notification notification = Notification
+                                .show(answerPaperName + " File Uploaded with Success!");
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notification.setPosition(Notification.Position.BOTTOM_END);
+                        notification.setDuration(2500);
+                    }else if (!answerValidationCheckBox.getValue()){
+                        Notification notification = new Notification("Please make sure You have Check the Acknowledge.", 2000, Notification.Position.BOTTOM_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+                        notification.open();
+                    } else if (!isSubmissionOnTime()){
+                        Notification notification = new Notification("Sorry!!, Exam Time Over Please Contact Examiner", 2000, Notification.Position.MIDDLE);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notification.open();
+                    } else {
+                        Notification notification = new Notification("Make Sure You have upload and submit your answers correctly!", 2000, Notification.Position.MIDDLE);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notification.open();
                     }
-                    Notification notification = Notification
-                            .show(answerPaperName + " File Uploaded with Success!");
-                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    notification.setPosition(Notification.Position.BOTTOM_END);
-                    notification.setDuration(2500);
-                }else {
-                    Notification notification = new Notification("Please make sure You have Check the Acknowledge.", 2000, Notification.Position.BOTTOM_CENTER);
-                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    notification.open();
                 }
-            }
-        });
-        submitButton.setWidthFull();
-        layout.add(upload,answerValidationCheckBox,submitButton);
+            });
+            submitButton.setWidthFull();
+            layout.add(upload,answerValidationCheckBox,submitButton);
+        }
+        else {
+            H2 errorHeader = new H2("Please Wait Until Exam is Started");
+            layout.add(errorHeader);
+            layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+
+        }
         add(layout);
         showOtpDialog();
         // Execute JavaScript code when the view is attached to the UI
@@ -123,68 +143,15 @@ public class FileUploadView extends HorizontalLayout {
         });
         return upload;
     }
-    private void showOtpDialog() {
-        dialog = new Dialog();
-        dialog.getElement().setAttribute("aria-label", "Enter Exam OTP");
-        // Create dialog layout
-        VerticalLayout dialogLayout = createDialogLayout();
-        dialog.add(dialogLayout);
-        dialog.setCloseOnOutsideClick(false);
-        dialog.setCloseOnEsc(false);
-        // Show the dialog
-        dialog.open();
-    }
 
-    private VerticalLayout createDialogLayout() {
-        H2 headline = new H2("Enter Exam OTP");
-        headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
-                .set("font-size", "1.5em").set("font-weight", "bold");
-
-        // Add an OTP input field
-        otpField = new TextField("OTP");
-        VerticalLayout fieldLayout = new VerticalLayout(otpField);
-        fieldLayout.setSpacing(false);
-        fieldLayout.setPadding(false);
-        fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout);
-        dialogLayout.setPadding(false);
-        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
-        // Add "Login" button to the dialog
-        Button loginButton = new Button("Submit", e -> {
-            // Perform login action here
-            performLogin();
-        });
-        loginButton.addClickShortcut(Key.ENTER);
-        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        dialogLayout.add(loginButton);
-
-        return dialogLayout;
-    }
-
-    private void performLogin() {
-        // Implement your login logic here
-        // Check OTP and proceed with login
-        try {
-            int enteredOtp = Integer.parseInt(otpField.getValue());
-            if (OTPGenerator.getInstance().getOTP().equals(String.valueOf(enteredOtp))) {
-                // Continue with login logic
-                dialog.close();
-            } else {
-                // Display an error message for incorrect OTP
-                Notification notification = new Notification("Entered Incorrect OTP!", 5000, Notification.Position.MIDDLE);
-                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                notification.open();
-            }
-        }catch (NumberFormatException e){
-            Notification notification = new Notification("Enter Valid OTP!", 5000, Notification.Position.MIDDLE);
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            notification.open();
-        } catch (Exception e){
-            e.getMessage();
+    private boolean isSubmissionOnTime(){
+        ExamModel examModel = ExamModel.getInstance();
+        if (examModel.getEndTime().isPresent() && examModel.getStartTime().isPresent() && examModel.getLateSubmission().isPresent()) {
+            if (examModel.getEndTime().get().plusMinutes(examModel.getLateSubmissionValue().orElse(0))
+                    .isAfter(LocalTime.now())
+                    && examModel.getStartTime().get().isBefore(LocalTime.now()))
+                return true;
         }
-        otpField.focus();
+        return false;
     }
-
-
 }
