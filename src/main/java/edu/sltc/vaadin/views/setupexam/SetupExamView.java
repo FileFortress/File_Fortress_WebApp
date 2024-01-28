@@ -286,6 +286,9 @@ public class SetupExamView extends VerticalLayout {
     private void removeNewStudentsAccess() {
         List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         if (!emails.isEmpty()) {
+
+//            Set<VaadinSession> connectedSessions = userSessionListener.getConnectedSessions();
+//            System.out.println("ConnectedSessions : " + connectedSessions.size());
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             for (String email : emails) {executorService.submit(() -> {
                 if (userDetailsManager.userExists(email)){
