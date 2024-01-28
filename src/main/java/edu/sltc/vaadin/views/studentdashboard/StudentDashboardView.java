@@ -43,10 +43,6 @@ public class StudentDashboardView extends VerticalLayout {
         setSpacing(false);
         // Obtain the ExamModel instance
         ExamModel examModel = ExamModel.getInstance();
-
-        examModel.getExamPaperName().ifPresent((s)->{
-            System.out.println("Paper Name : " + s);
-        });
         if (ExamModel.serverIsRunning){
             /*
              * module name
@@ -103,6 +99,7 @@ public class StudentDashboardView extends VerticalLayout {
              * Exam Instructions
              */
             TextArea examInstructions = new TextArea("Exam Instructions");
+            examInstructions.setTooltipText("Display the Instructions that you have to followed through the examination");
             examInstructions.setHeight("500px");
             examInstructions.setMaxWidth("1000px");
             examInstructions.setValue(examModel.getModuleDescription().orElse(""));
@@ -154,6 +151,8 @@ public class StudentDashboardView extends VerticalLayout {
 
     private static Button getDownloadBtn(Anchor downloadLink) {
         Button downloadBtn = new Button("Download Paper");
+        downloadBtn.setTooltipText("You can Download the Exam Paper Here");
+        downloadBtn.getStyle().setMargin("35px");
         downloadBtn.addClickListener(event -> {
             if (ExamModel.serverIsRunning && ExamModel.getInstance().getStartTime().orElse(LocalTime.MAX).isBefore(LocalTime.now()))
                 downloadLink.getElement().callJsFunction("click");

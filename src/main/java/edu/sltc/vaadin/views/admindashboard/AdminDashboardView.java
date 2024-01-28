@@ -25,9 +25,9 @@ import edu.sltc.vaadin.services.OTPGenerator;
 import edu.sltc.vaadin.timer.SimpleTimer;
 import edu.sltc.vaadin.timer.TimerConstants;
 import edu.sltc.vaadin.views.MainLayout;
-import edu.sltc.vaadin.views.fileupload.FileUploadView;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -42,6 +42,10 @@ import java.util.TimerTask;
 @CssImport("./styles/admin-dashboard.css")
 public class AdminDashboardView extends VerticalLayout {
     private Div timerLayout;
+//    @Value("${server.port}")
+//    private int port;
+
+    private final ServletWebServerApplicationContext webServerAppCtxt;
     private TextField WifiTextField, ServerUrlTextField, JoinedStudentsTextField, submissionCountTextField;
     private UI ui;
     private OTPListener otpListener;
@@ -49,7 +53,8 @@ public class AdminDashboardView extends VerticalLayout {
     private ConnectedStudentsListener connectedStudentsListener;
     private StudentsAnswerSubmissionListener studentsAnswerSubmissionListener;
     private SimpleTimer timer;
-    public AdminDashboardView() {
+    public AdminDashboardView(ServletWebServerApplicationContext webServerAppCtxt) {
+        this.webServerAppCtxt = webServerAppCtxt;
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
@@ -91,10 +96,8 @@ public class AdminDashboardView extends VerticalLayout {
         };
         OTPGenerator.getInstance().addListener(otpListener);
         ui.getPage().executeJs("setContentView()");
-//        timer.getElement().getChild(0).setText("00:00:00");
         // -------------------------------------------------------------------------------------------------------------
         Div moduleDetails = new Div();
-//        moduleDetails.setMaxWidth("800px");
         moduleDetails.addClassNames(Margin.Top.SMALL, Margin.Bottom.LARGE);
         add(moduleDetails);
 
@@ -104,18 +107,22 @@ public class AdminDashboardView extends VerticalLayout {
 
         WifiTextField = new TextField("Connected Wifi Network");
         WifiTextField.setReadOnly(true);
+        WifiTextField.setTooltipText("Connected Wifi SSID Name");
         formLayout.add(WifiTextField);
 
         ServerUrlTextField = new TextField("Server URL");
         ServerUrlTextField.setReadOnly(true);
+        ServerUrlTextField.setTooltipText("File fortress Exam Server URL");
         formLayout.add(ServerUrlTextField);
 
         JoinedStudentsTextField = new TextField("Joined Students");
         JoinedStudentsTextField.setReadOnly(true);
+        JoinedStudentsTextField.setTooltipText("Displays the current number of students who have successfully joined the Exam Server");
         formLayout.add(JoinedStudentsTextField);
 
         submissionCountTextField = new TextField("Answer Submission Count");
         submissionCountTextField.setReadOnly(true);
+        submissionCountTextField.setTooltipText("Displays the current number of answers that have successfully submitted to the Exam Server");
         formLayout.add(submissionCountTextField);
 
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("200", 1),
@@ -125,7 +132,7 @@ public class AdminDashboardView extends VerticalLayout {
         getStyle().set("text-align", "center");
 
         WifiTextField.setValue(CurrentWifiHandler.getWifiSSID());
-        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
+        ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":"+ webServerAppCtxt.getWebServer().getPort()      );
         JoinedStudentsTextField.setValue(CheckConnectedStudent.getStudentCount());
         submissionCountTextField.setValue(CheckSubmittedAnswers.getAnswerCount());
         connectedStudentsListener = studentCount->{
@@ -144,7 +151,7 @@ public class AdminDashboardView extends VerticalLayout {
         wifiListener = (wifiSSID)->{
             ui.access(() ->{
                 WifiTextField.setValue(wifiSSID);
-                ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":4444" );
+                ServerUrlTextField.setValue("https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":"+ webServerAppCtxt.getWebServer().getPort() );
                 // Push an empty update to trigger a background refresh
                 ui.push();
             });

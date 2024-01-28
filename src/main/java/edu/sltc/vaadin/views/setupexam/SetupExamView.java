@@ -83,17 +83,21 @@ public class SetupExamView extends VerticalLayout {
         moduleDetails.add(formLayout);
 
         moduleCode = new TextField("Module Code");
+        moduleCode.setTooltipText("Enter the Module Code of the examination");
         formLayout.add(moduleCode);
 
         moduleName = new TextField("Module Name");
+        moduleName.setTooltipText("Enter the Name of the examination");
         formLayout.add(moduleName);
 
         moduleDescription = new TextArea("Module Description");
+        moduleDescription.setTooltipText("Enter the Instructions that student have to followed through the examination");
         moduleDescription.setHeight("100px");
         formLayout.add(moduleDescription);
         formLayout.setColspan(moduleDescription, 2);
 
         lateSubmission =  new RadioButtonGroup<>();
+        lateSubmission.setTooltipText("Set the Extra time to answer submission to the examination, If Needed");
         lateSubmission.setLabel("Late Submission");
         lateSubmission.setItems("NO", "10 Minutes", "15 Minutes", "20 Minutes", "25 Minutes","30 Minutes");
         lateSubmission.setValue("NO");
@@ -101,7 +105,9 @@ public class SetupExamView extends VerticalLayout {
         formLayout.setColspan(lateSubmission, 2);
 
         startTimePicker = new TimePicker("Start Time");
+        startTimePicker.setTooltipText("Enter the Start Time of the examination");
         endTimePicker = new TimePicker("End Time");
+        endTimePicker.setTooltipText("Enter the End Time of the examination");
         endTimePicker.addClassNames(Margin.Top.SMALL, Margin.Bottom.SMALL);
         formLayout.add(startTimePicker, endTimePicker);
 
@@ -117,6 +123,7 @@ public class SetupExamView extends VerticalLayout {
 
         // Set ExamModel data to the view
         startServer = new Button("Start Server");
+        startServer.setTooltipText("Start the examination and send mails to students");
         startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
         startServer.addClickListener(e -> {
@@ -253,7 +260,7 @@ public class SetupExamView extends VerticalLayout {
         Notification.show("Exam details saved successfully!");
 
         //give access to students and have to add user to InMemoryUserDetailsManager
-        List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
+        List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         PasswordPool.getInstance().setStudentPasswords(PasswordGenerator.bulkPasswordForStudents(emails.size(),10));
         if (!emails.isEmpty()) {
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
@@ -277,11 +284,8 @@ public class SetupExamView extends VerticalLayout {
         }
     }
     private void removeNewStudentsAccess() {
-        List<String> emails = EmailExtractor.extractEmails("./user_emails.txt");
+        List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         if (!emails.isEmpty()) {
-
-//            Set<VaadinSession> connectedSessions = userSessionListener.getConnectedSessions();
-//            System.out.println("ConnectedSessions : " + connectedSessions.size());
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             for (String email : emails) {executorService.submit(() -> {
                 if (userDetailsManager.userExists(email)){
@@ -304,18 +308,6 @@ public class SetupExamView extends VerticalLayout {
                     vaadinSession.unlock();
                 }
             }
-
-//            for (VaadinSession vaadinSession : connectedSessions) {
-//                // Lock the current accessing session
-//                vaadinSession.lock();
-//                System.out.println(vaadinSession.getAttribute("role").toString());
-//                if (vaadinSession.getAttribute("role").toString().equals("STUDENT")){
-//                    vaadinSession.getSession().invalidate();
-//                    vaadinSession.close();
-//                }
-//                // Unlock it after invalidating session
-//                vaadinSession.unlock();
-//            }
         }
     }
 }

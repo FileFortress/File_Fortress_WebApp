@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class EmailExtractor {
     public static List<String> emails = new ArrayList<>();
-    public static List<String> extractEmails(String filePath) {
+    public static List<String> extractStudentsEmails(String filePath) {
         emails = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -28,6 +28,24 @@ public class EmailExtractor {
                 while (matcher.find()) {
                     if (checkStudentEmail(matcher.group()))
                         emails.add(matcher.group());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return emails;
+    }
+
+    public static List<String> extractEmails(String filePath) {
+        emails = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            Pattern emailPattern = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b");
+
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = emailPattern.matcher(line);
+                while (matcher.find()) {
+                    emails.add(matcher.group());
                 }
             }
         } catch (IOException e) {

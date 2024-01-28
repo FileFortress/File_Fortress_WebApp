@@ -49,8 +49,8 @@ public class FileUploadView extends HorizontalLayout {
 
     public FileUploadView() {
         VerticalLayout layout = new VerticalLayout();
-        layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         if (ExamModel.serverIsRunning && ExamModel.getInstance().getStartTime().orElse(LocalTime.MAX).isBefore(LocalTime.now())){
+            layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
             Upload upload = getUpload();
             upload.setWidthFull();
             upload.getStyle().set("display","flex");
@@ -76,7 +76,9 @@ public class FileUploadView extends HorizontalLayout {
                 public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
                     if (answerValidationCheckBox.getValue() && isSubmissionOnTime() && memoryBuffer.getInputStream() != null){
                         if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                            FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/answers/" + user.getUsername().split("@")[0] + "_" + answerPaperName, GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                            FileEncryptionService.decryptFile(memoryBuffer.getInputStream(),
+                                    "Uploads/answers/"+user.getUsername().split("@")[0]+"_"+ExamModel.getInstance().getModuleCode()+".pdf",
+                                    GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
                             CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
                         }
                         Notification notification = Notification
@@ -105,6 +107,7 @@ public class FileUploadView extends HorizontalLayout {
         else {
             H2 errorHeader = new H2("Please Wait Until Exam is Started");
             layout.add(errorHeader);
+            layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         }
         add(layout);
         showOtpDialog();
@@ -148,4 +151,5 @@ public class FileUploadView extends HorizontalLayout {
         }
         return false;
     }
+
 }
