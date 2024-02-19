@@ -32,6 +32,7 @@ import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -78,9 +79,8 @@ public class FileUploadView extends HorizontalLayout {
                     if (answerValidationCheckBox.getValue() && isSubmissionOnTime() && memoryBuffer.getInputStream() != null){
                         if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
                             FileEncryptionService.decryptFile(memoryBuffer.getInputStream(),
-                                    "Uploads/answers/"+user.getUsername().split("@")[0]+"_"+ExamModel.getInstance().getModuleCode()+".pdf",
+                                    "Uploads/answers/"+user.getUsername().split("@")[0]+"_"+ExamModel.getInstance().getModuleCode().orElse("ModuleCode")+".pdf",
                                     GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
-
                             CheckSubmittedAnswers.getInstance().addStudentEmail(user.getUsername());
                         }
                         Notification notification = Notification
@@ -146,10 +146,9 @@ public class FileUploadView extends HorizontalLayout {
 
     private boolean isSubmissionOnTime(){
         ExamModel examModel = ExamModel.getInstance();
-        if (examModel.getEndTime().isPresent() && examModel.getStartTime().isPresent() && examModel.getLateSubmission().isPresent()) {
-            if (examModel.getEndTime().get().plusMinutes(examModel.getLateSubmissionValue().orElse(0))
-                    .isAfter(LocalTime.now())
-                    && examModel.getStartTime().get().isBefore(LocalTime.now()))
+        if (examModel.getEndDateTime().isPresent() && examModel.getStartDateTime().isPresent()) {
+            if (examModel.getEndDateTime().get().isAfter(LocalDateTime.now())
+                    && examModel.getStartDateTime().get().isBefore(LocalDateTime.now()))
                 return true;
         }
         return false;

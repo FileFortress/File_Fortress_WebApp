@@ -57,6 +57,16 @@ public class EmailSenderService {
                     String mailBody = "Hosted Url is " + "https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() +
                             "\nUserName is " + toEmail +
                             "\nPassword is " + passwordList.get(i.getAndIncrement()) + " ";
+//                    String mailBody = "## Application Details\n" +
+//                            "- **Name:** File Fortress Web App\n" +
+//                            "- **Logo:** [YourLogo](https://nuyun-kalamullage.github.io/File_Fortress_WebApp/src/main/resources/META-INF/resources/images/logo_placeholder.png)\n\n" +
+//                            "## User Credentials\n" +
+//                            "- **UserName:** " + toEmail +
+//                            "- **Password:** " + passwordList.get(i.getAndIncrement()) + "\n\n" +
+//                            "## Hosted URL\n" +
+//                            "[Hosted URL](https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() + ")\n\n" +
+//                            "Best regards,\n" +
+//                            "File Fortress Team";
                     message.setText(mailBody);
                     javaMailSender.send(message);
                     System.out.println(toEmail + " E-Mail Sending Successful!!");

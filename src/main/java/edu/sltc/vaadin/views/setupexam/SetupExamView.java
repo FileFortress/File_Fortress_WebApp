@@ -36,6 +36,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -61,6 +62,7 @@ public class SetupExamView extends VerticalLayout {
     private  RadioButtonGroup<String> lateSubmission;
     private TimePicker startTimePicker, endTimePicker;
     private Button startServer;
+    private static final MemoryBuffer studentListMemoryBuffer = new MemoryBuffer(), examPaperMemoryBuffer = new MemoryBuffer();
 
     public SetupExamView(EmailSenderService senderService, InMemoryUserDetailsManager userDetailsManager, SessionHolder sessionHolder) {
         this.senderService = senderService;
@@ -127,14 +129,14 @@ public class SetupExamView extends VerticalLayout {
         startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
         startServer.addClickListener(e -> {
-            ExamModel.serverIsRunning = !ExamModel.serverIsRunning;
-            if (ExamModel.serverIsRunning){
+            if (!ExamModel.serverIsRunning && validateSetupExamData()){
                 startServer();
                 CheckConnectedStudent.getInstance().StartTimerThread();
                 CheckSubmittedAnswers.getInstance().StartTimerThread();
                 startServer.setText("Stop Server");
                 startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            }else{
+                ExamModel.serverIsRunning = true;
+            }else if(ExamModel.serverIsRunning){
                 examModel.resetInstance();
                 CheckConnectedStudent.getInstance().StopTimerThread();
                 CheckSubmittedAnswers.getInstance().StopTimerThread();
@@ -144,6 +146,7 @@ public class SetupExamView extends VerticalLayout {
                 startServer.removeThemeVariants(ButtonVariant.LUMO_ERROR);
                 startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                         ButtonVariant.LUMO_SUCCESS);
+                ExamModel.serverIsRunning = false;
             }
             System.out.println("Server State is "+ExamModel.serverIsRunning);
         });
@@ -162,24 +165,12 @@ public class SetupExamView extends VerticalLayout {
     }
 
     private static Upload getPaperUpload() {
-        Button uploadPDF = new Button("Upload PDF");
-        Upload upload = new Upload();
-        upload.setId("myVaadinUpload");
-        // Access the underlying HTML element of the Upload component
-        // Define the file receiver that will handle the file upload
-        MemoryBuffer memoryBuffer = new MemoryBuffer();
-        upload.setReceiver(memoryBuffer);
-
-        // Define the accepted file types. In this case, only PDF files are accepted.
-        upload.setAcceptedFileTypes("application/pdf");
-        Span dropLabel = new Span("Upload Exam Paper");
-        upload.setDropLabel(dropLabel);
-        upload.setUploadButton(uploadPDF);
+        Upload upload = getUpload("Upload PDF","myVaadinUpload",examPaperMemoryBuffer,"application/pdf","Upload Exam Paper");
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addSucceededListener(event -> {
 //           FileEncryptionService.encryptFile(memoryBuffer.getInputStream(), "src/main/resources/examFile.pdf");
             if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "Uploads/examFile_"+user.getUsername().split("@")[0]+".pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                FileEncryptionService.decryptFile(examPaperMemoryBuffer.getInputStream(), "Uploads/examFile_"+user.getUsername().split("@")[0]+".pdf", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
                 ExamModel.getInstance().setExamPaperName("examFile_" + user.getUsername().split("@")[0] + ".pdf");
             }
             // Retrieve the uploaded file from the FileReceiver
@@ -191,24 +182,13 @@ public class SetupExamView extends VerticalLayout {
         });
         return upload;
     }
-    private static Upload getStudentListUpload() {
-        Button uploadPDF = new Button("Upload Student List");
-        Upload upload = new Upload();
-        upload.setId("myStudentUpload");
-        // Access the underlying HTML element of the Upload component
-        // Define the file receiver that will handle the file upload
-        MemoryBuffer memoryBuffer = new MemoryBuffer();
-        upload.setReceiver(memoryBuffer);
 
-        // Define the accepted file types. In this case, only PDF files are accepted.
-        upload.setAcceptedFileTypes("text/plain");
-        Span dropLabel = new Span("Upload Student List");
-        upload.setDropLabel(dropLabel);
-        upload.setUploadButton(uploadPDF);
+    private static Upload getStudentListUpload() {
+        Upload upload = getUpload("Upload Student List","myStudentUpload", studentListMemoryBuffer,"text/plain","Upload Student List");
         // Add a listener to the upload component that will be notified when the upload is finished
         upload.addSucceededListener(event -> {
             if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user) {
-                FileEncryptionService.decryptFile(memoryBuffer.getInputStream(), "user_emails.txt", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
+                FileEncryptionService.decryptFile(studentListMemoryBuffer.getInputStream(), "user_emails.txt", GenerateKeyPair.generateSharedSecret(PublicKeyHolder.getInstance().get(user.getUsername())));
             }
             // Retrieve the uploaded file from the FileReceiver
             // Create a Notification class that displays the success message
@@ -219,7 +199,21 @@ public class SetupExamView extends VerticalLayout {
         });
         return upload;
     }
+    private static Upload getUpload(String buttonName, String buttonId, MemoryBuffer memoryBuffer, String acceptedFile, String spanTitle) {
+        Button uploadPDF = new Button(buttonName);
+        Upload upload = new Upload();
+        upload.setId(buttonId);
+        // Access the underlying HTML element of the Upload component
+        // Define the file receiver that will handle the file upload
+        upload.setReceiver(memoryBuffer);
 
+        // Define the accepted file types. In this case, only PDF files are accepted.
+        upload.setAcceptedFileTypes(acceptedFile);
+        Span dropLabel = new Span(spanTitle);
+        upload.setDropLabel(dropLabel);
+        upload.setUploadButton(uploadPDF);
+        return upload;
+    }
     private void setExamModelData(ExamModel examModel) {
         // Check if ExamPaperName is not null and show saved details
         // Set ExamModel data to the view
@@ -233,33 +227,11 @@ public class SetupExamView extends VerticalLayout {
             startServer.setText("Stop Server");
             startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
         }
-
     }
 
     private void startServer() {
         // Implement your server start logic here
-        // Obtain user input data
-        String moduleCodeValue = moduleCode.getValue();
-        String moduleNameValue = moduleName.getValue();
-        String moduleDescriptionValue = moduleDescription.getValue();
-        String lateSubmissionValue = lateSubmission.getValue();
-        LocalTime startTimeValue = startTimePicker.getValue();
-        LocalTime endTimeValue = endTimePicker.getValue();
-
-        ExamModel examModel = ExamModel.getInstance();
-        // Save data to the ExamModel
-        examModel.setModuleCode(moduleCodeValue);
-        examModel.setModuleName(moduleNameValue);
-        examModel.setModuleDescription(moduleDescriptionValue);
-        examModel.setLateSubmission(lateSubmissionValue);
-        examModel.setStartTime( LocalDateTime.of(LocalDate.now(),startTimeValue));
-        examModel.setEndTime(LocalDateTime.of(LocalDate.now(),endTimeValue));
-
-        System.out.println(examModel);
-        // Display success message or navigate to the student dashboard
-        Notification.show("Exam details saved successfully!");
-
-        //give access to students and have to add user to InMemoryUserDetailsManager
+        // Giving access to students and have to add user to InMemoryUserDetailsManager
         List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         PasswordPool.getInstance().setStudentPasswords(PasswordGenerator.bulkPasswordForStudents(emails.size(),10));
         if (!emails.isEmpty()) {
@@ -286,9 +258,6 @@ public class SetupExamView extends VerticalLayout {
     private void removeNewStudentsAccess() {
         List<String> emails = EmailExtractor.extractStudentsEmails("./user_emails.txt");
         if (!emails.isEmpty()) {
-
-//            Set<VaadinSession> connectedSessions = userSessionListener.getConnectedSessions();
-//            System.out.println("ConnectedSessions : " + connectedSessions.size());
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             for (String email : emails) {executorService.submit(() -> {
                 if (userDetailsManager.userExists(email)){
@@ -312,5 +281,47 @@ public class SetupExamView extends VerticalLayout {
                 }
             }
         }
+    }
+    private boolean validateSetupExamData(){
+        String moduleCodeValue = moduleCode.getValue();
+        String moduleNameValue = moduleName.getValue();
+        String moduleDescriptionValue = moduleDescription.getValue();
+        String lateSubmissionValue = lateSubmission.getValue();
+        LocalTime startTimeValue = startTimePicker.getValue();
+        LocalTime endTimeValue = endTimePicker.getValue();
+
+        //check above are null  then return false
+        if ( moduleCodeValue == null || moduleNameValue == null || moduleDescriptionValue == null ||
+                lateSubmissionValue == null || startTimeValue == null || endTimeValue == null ||
+                moduleCodeValue.isEmpty() || moduleNameValue.isEmpty() || moduleDescriptionValue.isEmpty()) {
+            // Display an error message or handle validation failure as needed
+            Notification.show("Please fill in all the required fields.", 3000, Notification.Position.BOTTOM_CENTER);
+            return false;
+        }
+        try {
+            if (examPaperMemoryBuffer.getInputStream().available() == 0 || studentListMemoryBuffer.getInputStream().available() == 0){
+                Notification.show("Please Upload Necessary Attachments.", 2500, Notification.Position.BOTTOM_CENTER);
+                return false;
+            }
+            System.out.println("Exam Paper Memory Buffer : " + examPaperMemoryBuffer.getInputStream().available());
+            System.out.println("Student Memory Buffer : " + studentListMemoryBuffer.getInputStream().available());
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+        //otherwise return ture
+        ExamModel examModel = ExamModel.getInstance();
+        // Save data to the ExamModel
+        examModel.setModuleCode(moduleCodeValue);
+        examModel.setModuleName(moduleNameValue);
+        examModel.setModuleDescription(moduleDescriptionValue);
+        examModel.setLateSubmission(lateSubmissionValue);
+        examModel.setStartTime( LocalDateTime.of(LocalDate.now(),startTimeValue));
+        examModel.setEndTime(LocalDateTime.of(LocalDate.now(),endTimeValue));
+
+        System.out.println(examModel);
+        // Display success message or navigate to the student dashboard
+        Notification.show("Exam details saved successfully!");
+        return true;
     }
 }
