@@ -68,8 +68,8 @@ public class SecurityConfiguration extends VaadinWebSecurity {
         return new InMemoryUserDetailsManager(
                 User.withUsername("nuyunpabasara457@gmail.com").password(passwordEncoder().encode("nuyun123")).roles("ADMIN").build(),
                 User.withUsername("nuyun457@gmail.com").password(passwordEncoder().encode("harindu123")).roles("USER").build(),
-                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build()
-//                ,User.withUsername("eviefyre4k@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(1))).roles("ADMIN").build()
+                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build(),
+                User.withUsername("eviefyre4k@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(1))).roles("ADMIN").build()
                 );
     }
 

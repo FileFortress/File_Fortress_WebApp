@@ -16,6 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
+import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
 import edu.sltc.vaadin.models.PublicKeyHolder;
@@ -162,11 +163,27 @@ public class MainLayout extends AppLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
     }
-    private void navigateBasedOnUserRole(String userRole) {
-        if ("ADMIN".equals(userRole)) {
-            UI.getCurrent().navigate(AdminDashboardView.class);
-        } else if ("STUDENT".equals(userRole)) {
-            UI.getCurrent().navigate(StudentDashboardView.class);
+    private void navigateBasedOnUserRole(GrantedAuthority grantedAuthority) {
+        if ("ROLE_ADMIN".equals(grantedAuthority.getAuthority())) {
+//            UI.getCurrent().navigate(AdminDashboardView.class);
+            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
+                sideNavItem.getElement().callJsFunction("click");
+                System.out.println("Admin !!!!");
+            });
+            UI.getCurrent().getPushConfiguration().setPushMode(PushMode.MANUAL);
+            UI.getCurrent().push();
+            UI.getCurrent().getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
+
+        } else if ("ROLE_USER".equals(grantedAuthority.getAuthority())) {
+//            UI.getCurrent().navigate(StudentDashboardView.class);
+            nav.getChildren().findFirst().ifPresent((sideNavItem)->{
+                sideNavItem.getElement().callJsFunction("click");
+                System.out.println("User !!!!");
+            });
+            UI.getCurrent().getPushConfiguration().setPushMode(PushMode.MANUAL);
+            UI.getCurrent().push();
+            UI.getCurrent().getPushConfiguration().setPushMode(PushMode.AUTOMATIC);
+
         } else {
             // Handle other roles or redirect to a default view
             UI.getCurrent().navigate(AboutView.class);

@@ -113,6 +113,9 @@ public class ExamModel {
             return Optional.empty();
         }
     }
+    public Optional<LocalDateTime> getStartDateTime(){
+        return Optional.ofNullable(startTime);
+    }
 
     public void resetInstance(){
         instance = new ExamModel();
