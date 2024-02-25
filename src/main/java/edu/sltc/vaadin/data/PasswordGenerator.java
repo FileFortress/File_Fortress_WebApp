@@ -38,7 +38,6 @@ public class PasswordGenerator {
             String randomPassword = generateRandomPassword(16);
             generatedPasswords.add(randomPassword);
         }
-        System.gc();
         return generatedPasswords;
     }
     public static void main(String[] args) {

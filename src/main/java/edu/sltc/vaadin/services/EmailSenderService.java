@@ -1,6 +1,11 @@
 package edu.sltc.vaadin.services;
 
+import edu.sltc.vaadin.data.PasswordGenerator;
+import edu.sltc.vaadin.models.PasswordPool;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -40,23 +45,36 @@ public class EmailSenderService {
         System.out.println("Mail Sending Successful!!");
     }
 
-    public void sendBulkEmails(List<String> toEmails, String subject, Set<String> body) {
+    public void sendBulkEmails(UserDetailsManager userDetailsManager, List<String> toEmails, String subject) {
         AtomicInteger i = new AtomicInteger();
-        ArrayList<String> passwordList = new ArrayList<>(body);
-
         // Set the number of threads based on your requirements
         int numberOfThreads = toEmails.size(); // Adjust as needed
         ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        PasswordPool.getInstance().setAdminPasswords(PasswordGenerator.bulkPasswordForExaminers(numberOfThreads));
+        ArrayList<String> passwordList = new ArrayList<>(PasswordPool.getInstance().getAdminPasswords());
 
         for (String toEmail : toEmails) {
+
             executorService.submit(() -> {
+                int index = i.getAndIncrement();
+                if (userDetailsManager.userExists(toEmail)){
+                    userDetailsManager.deleteUser(toEmail);
+                    System.out.println("Exist User Removed");
+                }
+                userDetailsManager.createUser(User.withUsername(toEmail)
+                        .password(new BCryptPasswordEncoder().encode(passwordList.get(index)))
+                        .roles("ADMIN")
+                        .build());
                 try {
                     SimpleMailMessage message = new SimpleMailMessage();
                     message.setTo(toEmail);
                     message.setSubject(subject);
+
                     String mailBody = "Hosted Url is " + "https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() +
                             "\nUserName is " + toEmail +
-                            "\nPassword is " + passwordList.get(i.getAndIncrement()) + " ";
+                            "\nPassword is " + passwordList.get(index) + " \n\n"+
+                            "Best regards,\n" +
+                            "File Fortress Team";
 //                    String mailBody = "## Application Details\n" +
 //                            "- **Name:** File Fortress Web App\n" +
 //                            "- **Logo:** [YourLogo](https://nuyun-kalamullage.github.io/File_Fortress_WebApp/src/main/resources/META-INF/resources/images/logo_placeholder.png)\n\n" +

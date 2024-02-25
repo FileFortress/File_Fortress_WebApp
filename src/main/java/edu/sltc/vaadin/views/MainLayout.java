@@ -19,6 +19,7 @@ import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import edu.sltc.vaadin.data.GenerateKeyPair;
+import edu.sltc.vaadin.models.PasswordPool;
 import edu.sltc.vaadin.models.PublicKeyHolder;
 import edu.sltc.vaadin.services.CheckConnectedStudent;
 import edu.sltc.vaadin.views.about.AboutView;
@@ -54,6 +55,7 @@ public class MainLayout extends AppLayout {
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
         this.authentication = SecurityContextHolder.getContext().getAuthentication();
+        PasswordPool.clearPasswordPool();
         Object principal = authentication.getPrincipal();
         Object credentials = authentication.getCredentials();
         System.out.println("Principal : " + principal);
