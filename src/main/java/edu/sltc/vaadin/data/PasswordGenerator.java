@@ -29,7 +29,6 @@ public class PasswordGenerator {
             String randomPassword = generateRandomPassword(passwordLength);
             generatedPasswords.add(randomPassword);
         }
-        System.gc();
         return generatedPasswords;
     }
     public static Set<String> bulkPasswordForExaminers(int numberOfExaminers){

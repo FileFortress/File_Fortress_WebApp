@@ -13,7 +13,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +35,21 @@ public class EmailSenderService {
         this.webServerAppCtxt = webServerAppCtxt;
     }
 
-    public void sendEmail(String toEmail, String subject, String body) {
+    public void sendEmailToStudent(String toEmail, String subject, String password) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject(subject);
-        message.setText(body);
+        String mailBody = "Dear Student," +
+                "\nYour Examination Server is now hosted and please join the server with following credentials" +
+                "\nWifi SSID is \"" +CurrentWifiHandler.getWifiSSID()+"\""+
+                "\nHosted Url is " + "https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() +
+                "\nUserName is " + toEmail +
+                "\nPassword is " + password + " \n\n"+
+                "Best regards,\n" +
+                "File Fortress Team";
+        message.setText(mailBody);
         javaMailSender.send(message);
-        System.out.println("Mail Sending Successful!!");
+        System.out.println("Mail Sending Successful to "+toEmail+"!!");
     }
 
     public void sendBulkEmails(UserDetailsManager userDetailsManager, List<String> toEmails, String subject) {
@@ -75,16 +82,7 @@ public class EmailSenderService {
                             "\nPassword is " + passwordList.get(index) + " \n\n"+
                             "Best regards,\n" +
                             "File Fortress Team";
-//                    String mailBody = "## Application Details\n" +
-//                            "- **Name:** File Fortress Web App\n" +
-//                            "- **Logo:** [YourLogo](https://nuyun-kalamullage.github.io/File_Fortress_WebApp/src/main/resources/META-INF/resources/images/logo_placeholder.png)\n\n" +
-//                            "## User Credentials\n" +
-//                            "- **UserName:** " + toEmail +
-//                            "- **Password:** " + passwordList.get(i.getAndIncrement()) + "\n\n" +
-//                            "## Hosted URL\n" +
-//                            "[Hosted URL](https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() + ")\n\n" +
-//                            "Best regards,\n" +
-//                            "File Fortress Team";
+
                     message.setText(mailBody);
                     javaMailSender.send(message);
                     System.out.println(toEmail + " E-Mail Sending Successful!!");

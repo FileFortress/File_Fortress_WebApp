@@ -43,7 +43,7 @@ import java.util.Set;
 
 //@JsModule("./clientKeyExchange.js")
 @JsModule("./test.js")
-@JsModule("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
+//@JsModule("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js")
 public class MainLayout extends AppLayout {
     private static final String LOGOUT_SUCCESS_URL = "/login";
     private H2 viewTitle;
