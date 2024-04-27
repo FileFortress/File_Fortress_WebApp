@@ -130,13 +130,14 @@ public class SetupExamView extends VerticalLayout {
                 ButtonVariant.LUMO_SUCCESS);
         startServer.addClickListener(e -> {
             if (!ExamModel.serverIsRunning && validateSetupExamData()){
+                ExamModel.serverIsRunning = true;
                 startServer();
                 CheckConnectedStudent.getInstance().StartTimerThread();
                 CheckSubmittedAnswers.getInstance().StartTimerThread();
                 startServer.setText("Stop Server");
                 startServer.addThemeVariants(ButtonVariant.LUMO_ERROR);
-                ExamModel.serverIsRunning = true;
             }else if(ExamModel.serverIsRunning){
+                ExamModel.serverIsRunning = false;
                 examModel.resetInstance();
                 CheckConnectedStudent.getInstance().StopTimerThread();
                 CheckSubmittedAnswers.getInstance().StopTimerThread();
@@ -146,7 +147,6 @@ public class SetupExamView extends VerticalLayout {
                 startServer.removeThemeVariants(ButtonVariant.LUMO_ERROR);
                 startServer.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                         ButtonVariant.LUMO_SUCCESS);
-                ExamModel.serverIsRunning = false;
             }
             System.out.println("Server State is "+ExamModel.serverIsRunning);
         });
@@ -238,13 +238,14 @@ public class SetupExamView extends VerticalLayout {
             ExecutorService executorService = Executors.newFixedThreadPool(emails.size());
             int i = 0;
             for (String email : emails) {
+                System.out.println("executing Email :"+email);
                 String password = PasswordPool.getInstance().getStudentPasswords().stream().toList().get(i++);
                 executorService.submit(() -> {
                     if (userDetailsManager.userExists(email)){
                         userDetailsManager.deleteUser(email);
                     }
                     if (ExamModel.serverIsRunning) {
-                        senderService.sendEmail(email, "User Password", "Your User Password is " + password);
+                        senderService.sendEmailToStudent(email, "User Password", password);
                         userDetailsManager.createUser(User.withUsername(email)
                                 .password(new BCryptPasswordEncoder().encode(password))
                                 .roles("USER")

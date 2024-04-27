@@ -33,6 +33,7 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Set;
 
 @EnableWebSecurity
 @Configuration
@@ -63,14 +64,11 @@ public class SecurityConfiguration extends VaadinWebSecurity {
         setLoginView(http, LoginView.class, "/");
     }
     @Bean
-    UserDetailsManager userDetailsManager(){
-     PasswordPool.getInstance().setAdminPasswords(PasswordGenerator.bulkPasswordForExaminers(2));
+    UserDetailsManager userDetailsManager(PasswordEncoder passwordEncoder){
         return new InMemoryUserDetailsManager(
-                User.withUsername("nuyunpabasara457@gmail.com").password(passwordEncoder().encode("nuyun123")).roles("ADMIN").build(),
-                User.withUsername("nuyun457@gmail.com").password(passwordEncoder().encode("harindu123")).roles("USER").build(),
-                User.withUsername("nuyunpabasara@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(0))).roles("ADMIN").build(),
-                User.withUsername("eviefyre4k@gmail.com").password(passwordEncoder().encode( new ArrayList<>(PasswordPool.getInstance().getAdminPasswords()).get(1))).roles("ADMIN").build()
-                );
+                User.withUsername("nuyunpabasara457@gmail.com").password(passwordEncoder.encode("nuyun123")).roles("ADMIN").build(),
+                User.withUsername("nuyun457@gmail.com").password(passwordEncoder.encode("harindu123")).roles("USER").build()
+);
     }
 
 }

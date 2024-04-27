@@ -12,7 +12,7 @@ import java.util.Set;
  * @project_Name File_Fortress_WebApp
  */
 public class PasswordPool {
-    private static PasswordPool instance;
+    private static volatile PasswordPool instance;
     private Set<String> adminEmails, studentEmails;
     private Set<String> adminPasswords, studentPasswords;
     private PasswordPool() {

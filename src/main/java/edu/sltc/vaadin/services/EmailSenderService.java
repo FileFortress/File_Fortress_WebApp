@@ -1,6 +1,11 @@
 package edu.sltc.vaadin.services;
 
+import edu.sltc.vaadin.data.PasswordGenerator;
+import edu.sltc.vaadin.models.PasswordPool;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -8,7 +13,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,42 +35,54 @@ public class EmailSenderService {
         this.webServerAppCtxt = webServerAppCtxt;
     }
 
-    public void sendEmail(String toEmail, String subject, String body) {
+    public void sendEmailToStudent(String toEmail, String subject, String password) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject(subject);
-        message.setText(body);
+        String mailBody = "Dear Student," +
+                "\nYour Examination Server is now hosted and please join the server with following credentials" +
+                "\nWifi SSID is \"" +CurrentWifiHandler.getWifiSSID()+"\""+
+                "\nHosted Url is " + "https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() +
+                "\nUserName is " + toEmail +
+                "\nPassword is " + password + " \n\n"+
+                "Best regards,\n" +
+                "File Fortress Team";
+        message.setText(mailBody);
         javaMailSender.send(message);
-        System.out.println("Mail Sending Successful!!");
+        System.out.println("Mail Sending Successful to "+toEmail+"!!");
     }
 
-    public void sendBulkEmails(List<String> toEmails, String subject, Set<String> body) {
+    public void sendBulkEmails(UserDetailsManager userDetailsManager, List<String> toEmails, String subject) {
         AtomicInteger i = new AtomicInteger();
-        ArrayList<String> passwordList = new ArrayList<>(body);
-
         // Set the number of threads based on your requirements
         int numberOfThreads = toEmails.size(); // Adjust as needed
         ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        PasswordPool.getInstance().setAdminPasswords(PasswordGenerator.bulkPasswordForExaminers(numberOfThreads));
+        ArrayList<String> passwordList = new ArrayList<>(PasswordPool.getInstance().getAdminPasswords());
 
         for (String toEmail : toEmails) {
+
             executorService.submit(() -> {
+                int index = i.getAndIncrement();
+                if (userDetailsManager.userExists(toEmail)){
+                    userDetailsManager.deleteUser(toEmail);
+                    System.out.println("Exist User Removed");
+                }
+                userDetailsManager.createUser(User.withUsername(toEmail)
+                        .password(new BCryptPasswordEncoder().encode(passwordList.get(index)))
+                        .roles("ADMIN")
+                        .build());
                 try {
                     SimpleMailMessage message = new SimpleMailMessage();
                     message.setTo(toEmail);
                     message.setSubject(subject);
+
                     String mailBody = "Hosted Url is " + "https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() +
                             "\nUserName is " + toEmail +
-                            "\nPassword is " + passwordList.get(i.getAndIncrement()) + " ";
-//                    String mailBody = "## Application Details\n" +
-//                            "- **Name:** File Fortress Web App\n" +
-//                            "- **Logo:** [YourLogo](https://nuyun-kalamullage.github.io/File_Fortress_WebApp/src/main/resources/META-INF/resources/images/logo_placeholder.png)\n\n" +
-//                            "## User Credentials\n" +
-//                            "- **UserName:** " + toEmail +
-//                            "- **Password:** " + passwordList.get(i.getAndIncrement()) + "\n\n" +
-//                            "## Hosted URL\n" +
-//                            "[Hosted URL](https://" + CurrentWifiHandler.getWlanIpAddress().get(CurrentWifiHandler.getWifiDescription()) + ":" + webServerAppCtxt.getWebServer().getPort() + ")\n\n" +
-//                            "Best regards,\n" +
-//                            "File Fortress Team";
+                            "\nPassword is " + passwordList.get(index) + " \n\n"+
+                            "Best regards,\n" +
+                            "File Fortress Team";
+
                     message.setText(mailBody);
                     javaMailSender.send(message);
                     System.out.println(toEmail + " E-Mail Sending Successful!!");

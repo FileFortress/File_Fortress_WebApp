@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConf
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.provisioning.UserDetailsManager;
 
 /**
  * The entry point of the Spring Boot application.
@@ -26,11 +27,11 @@ import org.springframework.context.event.EventListener;
 @PropertySource("classpath:application.properties")
 public class Application implements AppShellConfigurator {
     private final EmailSenderService senderService;
-    private final PasswordPool passwordPool;
+    private final UserDetailsManager userDetailsManager;
     @Autowired
-    public Application(EmailSenderService senderService) {
+    public Application(EmailSenderService senderService, UserDetailsManager userDetailsManager) {
         this.senderService = senderService;
-        this.passwordPool = PasswordPool.getInstance();
+        this.userDetailsManager = userDetailsManager;
     }
 
     public static void main(String[] args) {
@@ -42,6 +43,6 @@ public class Application implements AppShellConfigurator {
 
     @EventListener(ApplicationReadyEvent.class)
     public void sendEmailsToAdmins(){
-        senderService.sendBulkEmails(EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service", passwordPool.getAdminPasswords());
+        senderService.sendBulkEmails(userDetailsManager, EmailExtractor.extractEmails("./admin_emails.txt"), "FileFortress Admin Mail Service");
     }
 }
